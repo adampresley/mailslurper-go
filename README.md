@@ -42,6 +42,24 @@ From a terminal:
 * Windows: mailslurper.exe
 * Linux: ./mailslurper
 
+To see what options are available on the terminal execute the following:
+
+```bash
+$ ./mailslurper -help
+```
+
+The following options are available.
+
+* **-smtpport** - Port number to bind to for the SMTP server. Defaults to 8000
+* **-wwwport** - Port number to bind to for the web-based administrator. Defaults to 8080
+* **-www** - Path to the web administrator directory. Defaults to **www/**
+
+So, for example, to run MailSlurper on different ports, try this.
+
+```bash
+$ ./mailslurper -smtpport=2500 -wwwport=8083
+```
+
 Release Notes
 -------------
 
