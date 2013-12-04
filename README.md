@@ -60,6 +60,20 @@ So, for example, to run MailSlurper on different ports, try this.
 $ ./mailslurper -smtpport=2500 -wwwport=8083
 ```
 
+Documentation
+-------------
+Wanna see the documentation? Open up a terminal and try the following (Linux. Windows will vary slightly).
+
+```bash
+$ cd $GOPATH
+$ godoc -http=:6060
+```
+
+Then open up your favorite browser to *http://localhost:6060* and you will see a Go page.
+Click on the button named **Packages** at the top, and you will be presented with
+a list of packages. Find **github.com** and under that you will find the path **adampresley/mailslurper**.
+The package documentation is all there.
+
 Release Notes
 -------------
 
