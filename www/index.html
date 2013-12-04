@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!--
+// Copyright 2013 Adam Presley. All rights reserved
+// Use of this source code is governed by the MIT license
+// that can be found in the LICENSE file.
+-->
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="description" content="Slurp mails into oblivion!" />
+	<meta name="author" content="Adam Presley" />
+
+	<title>MailSlurper</title>
+
+	<!--CSS-START-->
+	<link href="/resources/css/bootstrap.css" rel="stylesheet" />
+	<link href="/resources/css/style.css" rel="stylesheet" />
+	<!--CSS-END-->
+
+	<!--[if lt IE 9]>
+	<script src="/resources/js/html5shiv.js"></script>
+	<script src="/resources/js/respond.min.js"></script>
+	<![endif]-->
+</head>
+
+<body>
+	<div class="navbar navbar-default navbar-static-top" role="navigation">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="/">MailSlurper</a>
+			</div>
+
+			<div class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="/">Home</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<div id="wrap">
+		<div id="content">
+		</div>
+	</div>
+
+	<footer id="footer">
+		<div class="container">
+			<p class="text-muted credit">&copy; 2013 Adam Presley</p>
+		</div>
+	</footer>
+
+	<script type="ractive" id="template">
+		<div data-layout='{"type": "border", "hgap": 3, "vgap": 3}' class="layout">
+			<div class="center" style="overflow: auto;">
+				<div id="mails">
+					<table class="table">
+						<thead>
+							<tr>
+								<th>Date</th>
+								<th>Subject</th>
+								<th>From</th>
+								<th>To</th>
+							</tr>
+						</thead>
+
+						<tbody>
+							{{#mails.length <= 0}}
+								<tr>
+									<td colspan="4">
+										No mail items to display. Send some mail!
+									</td>
+								</tr>
+							{{/mails.length <= 0}}
+
+							{{#mails.length > 0}}
+								{{#mails}}
+									<tr on-tap="viewMailItem" class="mailrow">
+										<td>{{dateSent}}</td>
+										<td>{{subject}}</td>
+										<td>{{fromAddress}}</td>
+										<td>{{(compressTo(toAddresses))}}</td>
+									</tr>
+								{{/mails}}
+							{{/mails.length > 0}}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="east">
+				{{#subject.length > 0}}
+					<strong>Subject:</strong> {{subject}}<br />
+					<strong>Date Sent:</strong> {{dateSent}}<br />
+					<strong>From:</strong> {{fromAddress}}<br />
+					<br />
+
+					{{mailView}}
+				{{/subject.length > 0}}
+			</div>
+		</div>
+	</script>
+
+	<script src="/resources/js/require.js"></script>
+	<script>
+		require(["./resources/js/config"], function() {
+			require(
+				[
+					"jquery", "rajo.pubsub", "rajo.ui.bootstrapmodal", "rajo.singlepage", "Ractive",
+					"app/MailCollection",
+					"jquery.blockUI", "jquery.jlayout"
+				],
+				function($, PubSub, BootstrapModal, SinglePage, Ractive, MailCollection) {
+					"use strict";
+
+					$.blockUI({ message: "<h3>Loading mails...</h3>" });
+
+					var
+						ractive = new Ractive({
+							el: "content",
+							template: "#template",
+							data: {
+								mails: [],
+								mailView: "",
+								subject: "",
+								dateSent: "",
+								fromAddress: "",
+
+								compressTo: function(toAddresses) {
+									return toAddresses.join("; ");
+								}
+							}
+						}),
+
+						container = $(".layout"),
+
+						relayout = function() {
+							container.layout({resize: false});
+						};
+
+					ractive.on({
+						viewMailItem: function(e) {
+							ractive.set("subject", e.context.subject);
+							ractive.set("dateSent", e.context.dateSent);
+							ractive.set("fromAddress", e.context.fromAddress);
+							ractive.set("mailView", e.context.body);
+
+							$(".mailrow").removeClass("highlight-row");
+							$(e.node).addClass("highlight-row");
+						}
+					});
+
+					MailCollection.get().done(function(data) {
+						ractive.set("mails", data);
+						PubSub.publish("unblock");
+					});
+
+					$("#content").css("height", "100%");
+					relayout();
+
+					$(window).resize(relayout);
+					$.unblockUI();
+				}
+			);
+		});
+	</script>
+</body>
+</html>
