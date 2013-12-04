@@ -35,6 +35,10 @@ html, body {
 	display: inline-block;
 }
 
+.south {
+	height: 135px;
+}
+
 .east {
 	width: 35%;
 	padding-left: 10px;
@@ -43,10 +47,6 @@ html, body {
 .center {
 	height: 100%;
 	border-right: 1px solid rgb(200,200,200);
-}
-
-.north, .south {
-	height: 10%;
 }
 
 .highlight-row {
