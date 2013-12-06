@@ -3,9 +3,10 @@
 #
 import smtplib
 import datetime
+import time
 from email.mime.text import MIMEText
 
-numMails = 20
+numMails = 10
 smtpPort = 8000
 
 me = "someone@another.com"
@@ -25,11 +26,13 @@ try:
 		msg["Subject"] = "Test Message #{0}".format(index)
 		msg["From"] = me
 		msg["To"] = to
-		msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M +0000")
+		msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0000 UTC")
 
 		server = smtplib.SMTP("localhost:{0}".format(smtpPort))
 		server.sendmail(me, [to], msg.as_string())
 		server.quit()
+
+		time.sleep(3)
 
 
 except Exception as e:
