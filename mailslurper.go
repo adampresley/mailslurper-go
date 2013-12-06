@@ -51,6 +51,7 @@ func main() {
 func setupAdminHandlers() {
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(*flagWWW))))
 	http.HandleFunc("/mails", admin.GetMailCollection)
+	http.HandleFunc("/ws", admin.WebsocketHandler)
 }
 
 func setupGlobalDatabaseConnection() {

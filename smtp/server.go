@@ -9,6 +9,7 @@ import (
 	"net"
 
 	"github.com/adampresley/mailslurper/data"
+	"github.com/adampresley/mailslurper/admin"
 )
 
 // Represents an SMTP server with an address and connection handle.
@@ -90,8 +91,9 @@ func (s *Server) ProcessRequests() {
 			parser.Run()
 
 			if parser.State == STATE_QUIT {
-				fmt.Println("Writing mail item to database...")
+				fmt.Println("Writing mail item to database and websocket...")
 				dbWriter <- parser.MailItem
+				admin.BroadcastMessageToWebsockets(parser.MailItem)
 			} else {
 				fmt.Println("An error occurred during mail transmission and data will not be written.")
 			}

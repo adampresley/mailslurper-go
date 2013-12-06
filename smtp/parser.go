@@ -432,7 +432,7 @@ func parseDataHeader(headerLines string) map[string]string {
 		splitHeaderItem := strings.Split(splitHeader[index], ":")
 
 		if strings.ToLower(splitHeaderItem[0]) == "date" {
-			result["date"] = strings.TrimSpace(strings.Join(splitHeaderItem[1:], ":"))
+			result["date"] = parseDateTime(strings.TrimSpace(strings.Join(splitHeaderItem[1:], ":")))
 			fmt.Println("Date: ", result["date"])
 		}
 
@@ -440,6 +440,27 @@ func parseDataHeader(headerLines string) map[string]string {
 			result["subject"] = strings.TrimSpace(strings.Join(splitHeaderItem[1:], ""))
 			fmt.Println("Subject: ", result["subject"])
 		}
+	}
+
+	return result
+}
+
+/*
+Takes a date/time string and attempts to parse it and return a newly formatted
+date/time that looks like YYYY-MM-DD HH:MM:SS
+*/
+func parseDateTime(dateString string) string {
+	outputForm := "2006-01-02 15:04:05"
+	firstForm := "Mon, 02 Jan 2006 15:04:05 -0700 MST"
+
+	result := ""
+
+	t, err := time.Parse(firstForm, dateString)
+	if err != nil {
+		fmt.Printf("Error parsing date: %s\n", err)
+		result = dateString
+	} else {
+		result = t.Format(outputForm)
 	}
 
 	return result
