@@ -117,7 +117,7 @@ Retrieves all stored mail items as an array of MailItemStruct items.
 func (ms *MailStorage) GetMails() []MailItemStruct {
 	result := make([]MailItemStruct, 0)
 
-	rows, err := ms.Db.Query("SELECT dateSent, fromAddress, toAddressList, subject, xmailer, body FROM mailitem")
+	rows, err := ms.Db.Query("SELECT dateSent, fromAddress, toAddressList, subject, xmailer, body FROM mailitem ORDER BY dateSent DESC")
 	if err != nil {
 		panic("Error running query to get mail items")
 	}
