@@ -77,6 +77,11 @@ The package documentation is all there.
 Release Notes
 -------------
 
+**2013-12-06**
+* Mails now display in descending order
+* SMTP server now writes new mail items to a websocket to update the UI
+* Updated version to 1.1
+
 **2013-12-04**
 * Initial conversion of the Groovy+Grails version of MailSlurper to Google Go. It is still pretty rough, but the mechanics are there
 
