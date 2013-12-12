@@ -16,10 +16,10 @@ import (
 
 func main() {
 	settings.Config = settings.Configuration{
-		WWW: "www/",
-		WWWPort: 8080,
+		WWW:         "www/",
+		WWWPort:     8080,
 		SmtpAddress: "127.0.0.1",
-		SmtpPort: 8000,
+		SmtpPort:    8000,
 	}
 
 	err := settings.Config.LoadSettings("config.json")
@@ -27,9 +27,6 @@ func main() {
 		fmt.Printf("There was an error reading your config.json settings file: %s", err)
 		return
 	}
-
-	fmt.Printf("WWW: %s on port %d\n", settings.Config.WWW, int(settings.Config.WWWPort))
-	fmt.Printf("SMTP: %s on port %d\n", settings.Config.SmtpAddress, int(settings.Config.SmtpPort))
 
 	/*
 	 * Setup global database connection handle
@@ -40,7 +37,7 @@ func main() {
 	/*
 	 * Setup the SMTP listener
 	 */
-	smtpServer := smtp.Server{Address: fmt.Sprintf("%s:%s", settings.Config.SmtpAddress, int(settings.Config.SmtpPort))}
+	smtpServer := smtp.Server{Address: fmt.Sprintf("%s:%d", settings.Config.SmtpAddress, int(settings.Config.SmtpPort))}
 	defer smtpServer.Close()
 
 	/*
@@ -54,8 +51,8 @@ func main() {
 	 * Setup web server for the administrator
 	 */
 	setupAdminHandlers()
-	fmt.Printf("MailSlurper administrator started on 0.0.0.0:%s (%d)\n\n", int(settings.Config.WWWPort), settings.Config.WWW)
-	http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", int(settings.Config.SmtpPort)), nil)
+	fmt.Printf("MailSlurper administrator started on 0.0.0.0:%d (%s)\n\n", int(settings.Config.WWWPort), settings.Config.WWW)
+	http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", int(settings.Config.WWWPort)), nil)
 }
 
 func setupAdminHandlers() {

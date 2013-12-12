@@ -7,7 +7,7 @@ import time
 from email.mime.text import MIMEText
 
 numMails = 10
-address = "localhost"
+address = "127.0.0.1"
 smtpPort = 8000
 
 me = "someone@another.com"
