@@ -1,0 +1,6 @@
+{
+	"www": "www/",
+	"wwwPort": 8080,
+	"smtpAddress": "127.0.0.1",
+	"smtpPort": 8000
+}
