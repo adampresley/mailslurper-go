@@ -5,22 +5,31 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"net/http"
 
 	"github.com/adampresley/mailslurper/admin"
 	"github.com/adampresley/mailslurper/data"
+	"github.com/adampresley/mailslurper/settings"
 	"github.com/adampresley/mailslurper/smtp"
 )
 
-var flagWWW = flag.String("www", "www/", "Path to the web administrator directory. Defaults to 'www/'")
-var flagSmtpAddress = flag.String("smtpaddress", "127.0.0.1", "Address to bind the SMTP server to.")
-var flagSmtpPort = flag.String("smtpport", "8000", "Port number to bind to for SMTP server. Defaults to 8000")
-var flagWwwPort = flag.String("wwwport", "8080", "Port number to bind to for WWW administrator. Defaults to 8080")
-
 func main() {
-	flag.Parse()
+	settings.Config = settings.Configuration{
+		WWW: "www/",
+		WWWPort: 8080,
+		SmtpAddress: "127.0.0.1",
+		SmtpPort: 8000,
+	}
+
+	err := settings.Config.LoadSettings("config.json")
+	if err != nil {
+		fmt.Printf("There was an error reading your config.json settings file: %s", err)
+		return
+	}
+
+	fmt.Printf("WWW: %s on port %d\n", settings.Config.WWW, int(settings.Config.WWWPort))
+	fmt.Printf("SMTP: %s on port %d\n", settings.Config.SmtpAddress, int(settings.Config.SmtpPort))
 
 	/*
 	 * Setup global database connection handle
@@ -31,7 +40,7 @@ func main() {
 	/*
 	 * Setup the SMTP listener
 	 */
-	smtpServer := smtp.Server{Address: fmt.Sprintf("%s:%s", *flagSmtpAddress, *flagSmtpPort)}
+	smtpServer := smtp.Server{Address: fmt.Sprintf("%s:%s", settings.Config.SmtpAddress, int(settings.Config.SmtpPort))}
 	defer smtpServer.Close()
 
 	/*
@@ -45,12 +54,12 @@ func main() {
 	 * Setup web server for the administrator
 	 */
 	setupAdminHandlers()
-	fmt.Printf("MailSlurper administrator started on localhost:%s (%s)\n\n", *flagWwwPort, *flagWWW)
-	http.ListenAndServe("0.0.0.0:"+*flagWwwPort, nil)
+	fmt.Printf("MailSlurper administrator started on 0.0.0.0:%s (%d)\n\n", int(settings.Config.WWWPort), settings.Config.WWW)
+	http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", int(settings.Config.SmtpPort)), nil)
 }
 
 func setupAdminHandlers() {
-	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(*flagWWW))))
+	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(settings.Config.WWW))))
 	http.HandleFunc("/mails", admin.GetMailCollection)
 	http.HandleFunc("/ws", admin.WebsocketHandler)
 }
