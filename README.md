@@ -51,9 +51,9 @@ $ ./mailslurper -help
 The following options are available.
 
 * **-smtpport** - Port number to bind to for the SMTP server. Defaults to 8000
+* **-smtpaddress** - Address to bind the SMTP server to. Defaults to **127.0.0.1**
 * **-wwwport** - Port number to bind to for the web-based administrator. Defaults to 8080
 * **-www** - Path to the web administrator directory. Defaults to **www/**
-* **-wwwport** - Port to run web administrator on. Defaults to **8080**
 
 So, for example, to run MailSlurper on different ports, try this.
 
