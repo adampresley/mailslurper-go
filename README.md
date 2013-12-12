@@ -53,6 +53,7 @@ The following options are available.
 * **-smtpport** - Port number to bind to for the SMTP server. Defaults to 8000
 * **-wwwport** - Port number to bind to for the web-based administrator. Defaults to 8080
 * **-www** - Path to the web administrator directory. Defaults to **www/**
+* **-wwwport** - Port to run web administrator on. Defaults to **8080**
 
 So, for example, to run MailSlurper on different ports, try this.
 
@@ -76,6 +77,9 @@ The package documentation is all there.
 
 Release Notes
 -------------
+
+**2013-12-12**
+* Options can now be configured through settings in a file named *config.json*
 
 **2013-12-11**
 * New command line flag **-smtpaddress** allows you to specify address to bind the SMTP server to
