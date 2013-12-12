@@ -29,7 +29,7 @@ This function takes a MailItemStruct and sends it to all open websockets.
 */
 func BroadcastMessageToWebsockets(message data.MailItemStruct) {
 	for connection := range WebsocketConnections {
-		connection.SendChannel <-message
+		connection.SendChannel <- message
 	}
 }
 

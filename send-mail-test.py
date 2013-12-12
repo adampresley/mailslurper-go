@@ -7,6 +7,7 @@ import time
 from email.mime.text import MIMEText
 
 numMails = 10
+address = "localhost"
 smtpPort = 8000
 
 me = "someone@another.com"
@@ -28,7 +29,7 @@ try:
 		msg["To"] = to
 		msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0000 UTC")
 
-		server = smtplib.SMTP("localhost:{0}".format(smtpPort))
+		server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
 		server.sendmail(me, [to], msg.as_string())
 		server.quit()
 

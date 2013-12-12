@@ -77,6 +77,9 @@ The package documentation is all there.
 Release Notes
 -------------
 
+**2013-12-11**
+* New command line flag **-smtpaddress** allows you to specify address to bind the SMTP server to
+
 **2013-12-06**
 * Mails now display in descending order
 * SMTP server now writes new mail items to a websocket to update the UI

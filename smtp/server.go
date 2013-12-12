@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/adampresley/mailslurper/data"
 	"github.com/adampresley/mailslurper/admin"
+	"github.com/adampresley/mailslurper/data"
 )
 
 // Represents an SMTP server with an address and connection handle.

@@ -15,6 +15,7 @@ import (
 )
 
 var flagWWW = flag.String("www", "www/", "Path to the web administrator directory. Defaults to 'www/'")
+var flagSmtpAddress = flag.String("smtpaddress", "127.0.0.1", "Address to bind the SMTP server to.")
 var flagSmtpPort = flag.String("smtpport", "8000", "Port number to bind to for SMTP server. Defaults to 8000")
 var flagWwwPort = flag.String("wwwport", "8080", "Port number to bind to for WWW administrator. Defaults to 8080")
 
@@ -30,7 +31,7 @@ func main() {
 	/*
 	 * Setup the SMTP listener
 	 */
-	smtpServer := smtp.Server{Address: "127.0.0.1:" + *flagSmtpPort}
+	smtpServer := smtp.Server{Address: fmt.Sprintf("%s:%s", *flagSmtpAddress, *flagSmtpPort)}
 	defer smtpServer.Close()
 
 	/*
