@@ -61,6 +61,31 @@ So, for example, to run MailSlurper on different ports, try this.
 $ ./mailslurper -smtpport=2500 -wwwport=8083
 ```
 
+Configuration
+-------------
+MailSlurper can be configured by providing settings in a file called **config.json**.
+This is a text-based file with a JSON structure in it containing four configuration
+settings. It looks like this.
+
+```javascript
+{
+	"www": "www/",
+	"wwwPort": 8080,
+	"smtpAddress": "127.0.0.1",
+	"smtpPort": 8000
+}
+```
+
+* **www** - Path to the web administrator directory. 
+* **wwwPort** - Port number to bind to for the web-based administrator. 
+* **smtpAddress** - Address to bind the SMTP server to. 
+* **smtpPort** - Port number to bind to for the SMTP server.
+
+Please note that these provide MailSlurper the settings it needs to run and the file
+must be configured properly for the application to function. Also note that if you
+provide command line flag settings when running the server these configuration
+values will be superceded by the command line flags.
+
 Documentation
 -------------
 Wanna see the documentation? Open up a terminal and try the following (Linux. Windows will vary slightly).
