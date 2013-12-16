@@ -7,11 +7,14 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 
-	"github.com/adampresley/mailslurper/admin"
+	"github.com/adampresley/mailslurper/admin/controllers"
+	"github.com/adampresley/mailslurper/admin/websockets"
 	"github.com/adampresley/mailslurper/data"
 	"github.com/adampresley/mailslurper/settings"
 	"github.com/adampresley/mailslurper/smtp"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -22,11 +25,18 @@ func main() {
 		SmtpPort:    8000,
 	}
 
+	settings.Config.LoadHeader("header")
+	settings.Config.LoadFooter("footer")
+
 	err := settings.Config.LoadSettings("config.json")
 	if err != nil {
 		fmt.Printf("There was an error reading your config.json settings file: %s", err)
 		return
 	}
+
+	wwwAbs, _ := filepath.Abs(settings.Config.WWW)
+	settings.Config.WWWAbs = wwwAbs
+	staticPath := filepath.Join(settings.Config.WWWAbs, "resources")
 
 	/*
 	 * Setup global database connection handle
@@ -50,15 +60,27 @@ func main() {
 	/*
 	 * Setup web server for the administrator
 	 */
-	setupAdminHandlers()
-	fmt.Printf("MailSlurper administrator started on 0.0.0.0:%d (%s)\n\n", int(settings.Config.WWWPort), settings.Config.WWW)
-	http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", int(settings.Config.WWWPort)), nil)
-}
+	requestRouter := mux.NewRouter()
 
-func setupAdminHandlers() {
-	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(settings.Config.WWW))))
-	http.HandleFunc("/mails", admin.GetMailCollection)
-	http.HandleFunc("/ws", admin.WebsocketHandler)
+	// Home
+	requestRouter.HandleFunc("/", controllers.Home).Methods("GET")
+
+	// Mail items
+	requestRouter.HandleFunc("/mails", controllers.GetMailCollection).Methods("GET")
+
+	// Configuration
+	requestRouter.HandleFunc("/configuration", controllers.Config).Methods("GET")
+	requestRouter.HandleFunc("/config", controllers.GetConfig).Methods("GET")
+	requestRouter.HandleFunc("/config", controllers.SaveConfig).Methods("PUT")
+
+	// Web-sockets
+	requestRouter.HandleFunc("/ws", websockets.WebsocketHandler)
+
+	// Static requests
+	requestRouter.PathPrefix("/resources/").Handler(http.StripPrefix("/resources/", http.FileServer(http.Dir(staticPath))))
+
+	fmt.Printf("MailSlurper administrator started on %s (%s)\n\n", settings.Config.GetFullListenAddress(), settings.Config.WWW)
+	http.ListenAndServe(settings.Config.GetFullListenAddress(), requestRouter)
 }
 
 func setupGlobalDatabaseConnection() {

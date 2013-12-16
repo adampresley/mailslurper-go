@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/adampresley/mailslurper/admin"
+	"github.com/adampresley/mailslurper/admin/websockets"
 	"github.com/adampresley/mailslurper/data"
 )
 
@@ -93,7 +93,7 @@ func (s *Server) ProcessRequests() {
 			if parser.State == STATE_QUIT {
 				fmt.Println("Writing mail item to database and websocket...")
 				dbWriter <- parser.MailItem
-				admin.BroadcastMessageToWebsockets(parser.MailItem)
+				websockets.BroadcastMessageToWebsockets(parser.MailItem)
 			} else {
 				fmt.Println("An error occurred during mail transmission and data will not be written.")
 			}

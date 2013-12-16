@@ -1,6 +1,1 @@
-{
-	"www": "www/",
-	"wwwPort": 8080,
-	"smtpAddress": "127.0.0.1",
-	"smtpPort": 8000
-}
+{"smtpAddress":"0.0.0.0","smtpPort":8000,"www":"www/","wwwPort":8080}

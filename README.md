@@ -76,9 +76,9 @@ settings. It looks like this.
 }
 ```
 
-* **www** - Path to the web administrator directory. 
-* **wwwPort** - Port number to bind to for the web-based administrator. 
-* **smtpAddress** - Address to bind the SMTP server to. 
+* **www** - Path to the web administrator directory.
+* **wwwPort** - Port number to bind to for the web-based administrator.
+* **smtpAddress** - Address to bind the SMTP server to.
 * **smtpPort** - Port number to bind to for the SMTP server.
 
 Please note that these provide MailSlurper the settings it needs to run and the file
@@ -102,6 +102,10 @@ The package documentation is all there.
 
 Release Notes
 -------------
+
+**2013-12-15**
+* Added new interface to the administrator to change settings to *config.json*
+* Some code cleanup
 
 **2013-12-12**
 * Options can now be configured through settings in a file named *config.json*

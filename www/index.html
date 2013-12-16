@@ -1,124 +1,73 @@
-<!DOCTYPE html>
-<!--
-// Copyright 2013 Adam Presley. All rights reserved
-// Use of this source code is governed by the MIT license
-// that can be found in the LICENSE file.
--->
-<html lang="en">
-<head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="description" content="Slurp mails into oblivion!" />
-	<meta name="author" content="Adam Presley" />
+<div id="content">
+</div>
 
-	<title>MailSlurper</title>
+<script type="ractive" id="template">
+	<div data-layout='{"type": "border", "hgap": 3, "vgap": 3}' class="layout">
+		<div class="center" style="overflow: auto;">
+			<div id="mails">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Date</th>
+							<th>Subject</th>
+							<th>From</th>
+							<th>To</th>
+						</tr>
+					</thead>
 
-	<!--CSS-START-->
-	<link href="/resources/css/bootstrap.css" rel="stylesheet" />
-	<link href="/resources/css/style.css" rel="stylesheet" />
-	<!--CSS-END-->
-
-	<!--[if lt IE 9]>
-	<script src="/resources/js/html5shiv.js"></script>
-	<script src="/resources/js/respond.min.js"></script>
-	<![endif]-->
-</head>
-
-<body>
-	<div class="navbar navbar-default navbar-static-top" role="navigation">
-		<div class="container">
-			<div class="navbar-header">
-				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-				<a class="navbar-brand" href="/">MailSlurper</a>
-			</div>
-
-			<div class="navbar-collapse collapse">
-				<ul class="nav navbar-nav">
-					<li class="active"><a href="/">Home</a></li>
-				</ul>
-			</div>
-		</div>
-	</div>
-
-	<div id="wrap">
-		<div id="content">
-		</div>
-	</div>
-
-	<script type="ractive" id="template">
-		<div data-layout='{"type": "border", "hgap": 3, "vgap": 3}' class="layout">
-			<div class="center" style="overflow: auto;">
-				<div id="mails">
-					<table class="table">
-						<thead>
+					<tbody>
+						{{#mails.length <= 0}}
 							<tr>
-								<th>Date</th>
-								<th>Subject</th>
-								<th>From</th>
-								<th>To</th>
+								<td colspan="4">
+									No mail items to display. Send some mail!
+								</td>
 							</tr>
-						</thead>
+						{{/mails.length <= 0}}
 
-						<tbody>
-							{{#mails.length <= 0}}
-								<tr>
-									<td colspan="4">
-										No mail items to display. Send some mail!
-									</td>
+						{{#mails.length > 0}}
+							{{#mails}}
+								<tr on-tap="viewMailItem" class="mailrow">
+									<td>{{dateSent}}</td>
+									<td>{{subject}}</td>
+									<td>{{fromAddress}}</td>
+									<td>{{(compressTo(toAddresses))}}</td>
 								</tr>
-							{{/mails.length <= 0}}
-
-							{{#mails.length > 0}}
-								{{#mails}}
-									<tr on-tap="viewMailItem" class="mailrow">
-										<td>{{dateSent}}</td>
-										<td>{{subject}}</td>
-										<td>{{fromAddress}}</td>
-										<td>{{(compressTo(toAddresses))}}</td>
-									</tr>
-								{{/mails}}
-							{{/mails.length > 0}}
-						</tbody>
+							{{/mails}}
+						{{/mails.length > 0}}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="east">
+			{{#subject.length > 0}}
+				<div class="well">
+					<table class="table table-condensed">
+						<tr>
+							<td><strong>Subject:</strong></td>
+							<td>{{subject}}</td>
+						</tr>
+						<tr>
+							<td><strong>Date Sent:</strong></td>
+							<td>{{dateSent}}</td>
+						</tr>
+						<tr>
+							<td><strong>From:</strong></td>
+							<td>{{fromAddress}}</td>
+						</tr>
 					</table>
 				</div>
-			</div>
-			<div class="east">
-				{{#subject.length > 0}}
-					<div class="well">
-						<table class="table table-condensed">
-							<tr>
-								<td><strong>Subject:</strong></td>
-								<td>{{subject}}</td>
-							</tr>
-							<tr>
-								<td><strong>Date Sent:</strong></td>
-								<td>{{dateSent}}</td>
-							</tr>
-							<tr>
-								<td><strong>From:</strong></td>
-								<td>{{fromAddress}}</td>
-							</tr>
-						</table>
-					</div>
 
-					{{mailView}}
-				{{/subject.length > 0}}
-			</div>
-			<div class="south">
-				<footer id="footer">
-					<div class="container">
-						<p class="text-muted credit">&copy; 2013 Adam Presley</p>
-					</div>
-				</footer>
-			</div>
+				{{mailView}}
+			{{/subject.length > 0}}
 		</div>
-	</script>
+		<div class="south">
+			<footer id="footer">
+				<div class="container">
+					<p class="text-muted credit">&copy; 2013 Adam Presley</p>
+				</div>
+			</footer>
+		</div>
+	</div>
+</script>
 
-	<script src="/resources/js/require.js"></script>
-	<script src="/resources/js/app/index.js"></script>
-</body>
-</html>
+<script src="/resources/js/app/index.js"></script>

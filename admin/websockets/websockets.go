@@ -2,11 +2,9 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-package admin
+package websockets
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/adampresley/mailslurper/data"
@@ -34,26 +32,11 @@ func BroadcastMessageToWebsockets(message data.MailItemStruct) {
 }
 
 /*
-This function handles a web GET request for "/mails". It queries the storage
-engine for all mail items, sets the content type header to text/json, and
-returns a JSON-serialized array of mail data.
-*/
-func GetMailCollection(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Content-Type", "text/json")
-	mailItems := data.Storage.GetMails()
-
-	json, _ := json.Marshal(mailItems)
-	fmt.Fprintf(writer, string(json))
-}
-
-/*
 This function handles the handshake for our websocket connection.
 It sets up a goroutine to handle sending MailItemStructs to the
 other side.
 */
 func WebsocketHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Printf("Incoming websocket connection...\n")
-
 	ws, err := websocket.Upgrade(writer, request, nil, 1024, 1024)
 	if _, ok := err.(websocket.HandshakeError); ok {
 		http.Error(writer, "Invalid handshake", 400)
@@ -70,12 +53,8 @@ func WebsocketHandler(writer http.ResponseWriter, request *http.Request) {
 	WebsocketConnections[connection] = true
 	defer destroyConnection(connection)
 
-	fmt.Printf("Websocket handler assigned.\n")
-
 	for {
 		for message := range connection.SendChannel {
-			fmt.Printf("Recieved message for broadcast to websocket\n")
-
 			err := connection.WS.WriteJSON(message)
 			if err != nil {
 				break

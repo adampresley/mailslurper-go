@@ -1,14 +1,14 @@
 require(["./resources/js/config"], function() {
 	require(
 		[
-			"jquery", "rajo.pubsub", "rajo.ui.bootstrapmodal", "rajo.singlepage", "Ractive",
+			"jquery", "app/MailSlurper", "rajo.pubsub", "rajo.ui.bootstrapmodal", "Ractive",
 			"app/MailCollection",
-			"jquery.blockUI", "jquery.jlayout"
+			"jquery.jlayout"
 		],
-		function($, PubSub, BootstrapModal, SinglePage, Ractive, MailCollection) {
+		function($, MailSlurper, PubSub, BootstrapModal, Ractive, MailCollection) {
 			"use strict";
 
-			$.blockUI({ message: "<h3>Loading mails...</h3>" });
+			PubSub.publish("mailslurper.block", "Loading mails...");
 
 			var
 				ractive = new Ractive({
@@ -42,15 +42,6 @@ require(["./resources/js/config"], function() {
 				},
 
 				/**
-				 * Wrapper for console.log
-				 */
-				log = function(msg) {
-					if (window.hasOwnProperty("console")) {
-						console.log(msg);
-					}
-				},
-
-				/**
 				 * Resizes the jLayout border layout container. This is called
 				 * by the window resize event.
 				 */
@@ -67,9 +58,9 @@ require(["./resources/js/config"], function() {
 					if (window.hasOwnProperty("WebSocket")) {
 						websocketConnection = new WebSocket("ws://" + location.host + "/ws");
 
-						websocketConnection.onclose = function(e) { log("Websocket closed"); websocketConnection = null; }
+						websocketConnection.onclose = function(e) { MailSlurper.log("Websocket closed"); websocketConnection = null; }
 						websocketConnection.onmessage = function(e) { addMailItemToTable($.parseJSON(e.data)); }
-						websocketConnection.onerror = function(e) { log("An error occurred on the websocket. Closing."); websocketConnection.close(); websocketConnection = null; }
+						websocketConnection.onerror = function(e) { MailSlurper.log("An error occurred on the websocket. Closing."); websocketConnection.close(); websocketConnection = null; }
 					}
 				};
 
@@ -90,16 +81,13 @@ require(["./resources/js/config"], function() {
 			 */
 			MailCollection.get().done(function(data) {
 				ractive.set("mails", data);
-				PubSub.publish("unblock");
+				PubSub.publish("mailslurper.unblock");
 			});
-
-//			$("#content").css("height", "100%");
 
 			relayout();
 			setupWebsocket();
 
 			$(window).resize(relayout);
-			$.unblockUI();
 		}
 	);
 });
