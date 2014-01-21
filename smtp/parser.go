@@ -452,13 +452,19 @@ date/time that looks like YYYY-MM-DD HH:MM:SS
 func parseDateTime(dateString string) string {
 	outputForm := "2006-01-02 15:04:05"
 	firstForm := "Mon, 02 Jan 2006 15:04:05 -0700 MST"
+	secondForm := "Mon, 02 Jan 2006 15:04:05 -0700 (MST)"
 
 	result := ""
 
 	t, err := time.Parse(firstForm, dateString)
 	if err != nil {
-		fmt.Printf("Error parsing date: %s\n", err)
-		result = dateString
+		t, err = time.Parse(secondForm, dateString)
+		if err != nil {
+			fmt.Printf("Error parsing date: %s\n", err)
+			result = dateString
+		} else {
+			result = t.Format(outputForm)
+		}
 	} else {
 		result = t.Format(outputForm)
 	}
