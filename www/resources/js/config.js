@@ -3,6 +3,7 @@ require.config({
 	paths: {
 		"app": "app",
 		"persona": "//login.persona.org/include.js",
+		"jqueryui": "jquery/jquery-ui-1.10.4.min",
 		"bootstrap": "jquery/bootstrap",
 		"rajo.dom": "rajo/rajo.dom",
 		"rajo.identity.persona": "rajo/rajo.identity.persona",
@@ -20,9 +21,12 @@ require.config({
 		"jlayout.flow": "jquery/jlayout.flow",
 		"jlayout.grid": "jquery/jlayout.grid",
 		"jquery.jlayout": "jquery/jquery.jlayout",
-		"jquery.sizes": "jquery/jquery.sizes"
+		"jquery.sizes": "jquery/jquery.sizes",
+
+		"layout": "jquery/jquery.layout"
 	},
 	shim: {
+		"jqueryui": { deps: ["jquery"] },
 		"jquery.blockUI": { deps: ["jquery"] },
 		"bootstrap": { deps: ["jquery"] },
 		"daterangepicker": { deps: ["moment", "bootstrap"] },
@@ -31,6 +35,8 @@ require.config({
 		"jlayout.border": { deps: ["jquery.sizes"] },
 		"jlayout.flexgrid": { deps: ["jquery.sizes"] },
 		"jlayout.flow": { deps: ["jquery.sizes"] },
-		"jlayout.grid": { deps: ["jquery.sizes"] }
+		"jlayout.grid": { deps: ["jquery.sizes"] },
+
+		"layout": { deps: ["jqueryui"] }
 	}
 });

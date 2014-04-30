@@ -3,27 +3,54 @@ require(["./resources/js/config"], function() {
 		[
 			"jquery", "app/MailSlurper", "rajo.pubsub", "rajo.ui.bootstrapmodal", "Ractive",
 			"app/MailCollection",
-			"jquery.jlayout"
+			"layout"
 		],
 		function($, MailSlurper, PubSub, BootstrapModal, Ractive, MailCollection) {
 			"use strict";
 
 			PubSub.publish("mailslurper.block", "Loading mails...");
+			$("body").layout({
+				applyDemoStyles: false,
+				north__resizable: false,
+				north__closable: false,
+				south__resizable: false,
+				south__closable: false,
+				east__size: "40%"
+			});
 
 			var
-				ractive = new Ractive({
-					el: "content",
-					template: "#template",
+				mails = [],
+
+				mailListRactive = new Ractive({
+					el: "mailList",
+					template: "#mailListTemplate",
 					data: {
-						mails: [],
-						mailView: "",
-						subject: "",
-						dateSent: "",
-						fromAddress: "",
+						mails: mails,
+						sortColumn: "dateSent",
 
 						compressTo: function(toAddresses) {
 							return toAddresses.join("; ");
+						},
+
+						sort: function(array, column) {
+							console.log("in sort %o", arguments);
+							array = array.slice();
+
+							return array.sort(function(a, b) {
+								return a[column] < b[column] ? -1 : 1;
+							});
 						}
+					}
+				}),
+
+				mailViewRactive = new Ractive({
+					el: "mailView",
+					template: "#mailViewTemplate",
+					data: {
+						mailView: "",
+						subject: "",
+						dateSent: "",
+						fromAddress: ""
 					}
 				}),
 
@@ -35,18 +62,7 @@ require(["./resources/js/config"], function() {
 				 * and will display the mail item in a table.
 				 */
 				addMailItemToTable = function(mailItem) {
-					var data = ractive.get("mails");
-
-					data.unshift(mailItem);
-					ractive.set("mails", data);
-				},
-
-				/**
-				 * Resizes the jLayout border layout container. This is called
-				 * by the window resize event.
-				 */
-				relayout = function() {
-					container.layout({resize: false});
+					mails.unshift(mailItem);
 				},
 
 				/**
@@ -64,15 +80,19 @@ require(["./resources/js/config"], function() {
 					}
 				};
 
-			ractive.on({
+			mailListRactive.on({
 				viewMailItem: function(e) {
-					ractive.set("subject", e.context.subject);
-					ractive.set("dateSent", e.context.dateSent);
-					ractive.set("fromAddress", e.context.fromAddress);
-					ractive.set("mailView", e.context.body);
+					mailViewRactive.set("subject", e.context.subject);
+					mailViewRactive.set("dateSent", e.context.dateSent);
+					mailViewRactive.set("fromAddress", e.context.fromAddress);
+					mailViewRactive.set("mailView", e.context.body);
 
 					$(".mailrow").removeClass("highlight-row");
 					$(e.node).addClass("highlight-row");
+				},
+
+				sort: function(e, column) {
+					this.set("sortColumn", column);
 				}
 			});
 
@@ -80,14 +100,13 @@ require(["./resources/js/config"], function() {
 			 * Go get our mail items from the webserver.
 			 */
 			MailCollection.get().done(function(data) {
-				ractive.set("mails", data);
+				mails = data;
+				mailListRactive.set("mails", mails);
+
 				PubSub.publish("mailslurper.unblock");
 			});
 
-			relayout();
 			setupWebsocket();
-
-			$(window).resize(relayout);
 		}
 	);
 });

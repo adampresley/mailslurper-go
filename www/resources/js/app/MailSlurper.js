@@ -5,9 +5,9 @@ define([ "jquery", "rajo.pubsub", "jquery.blockUI" ], function($, PubSub) {
 		$.blockUI({ message: "<h3>" + msg + "</h3>" });
 	});
 
-	PubSub.subscribe("mailslurper.unblock", function(fn) { 
-		$.unblockUI(); 
-		if (fn !== undefined) {
+	PubSub.subscribe("mailslurper.unblock", function(fn) {
+		$.unblockUI();
+		if (fn !== undefined && typeof fn === Function) {
 			fn();
 		}
 	});
