@@ -1,15 +1,12 @@
 require.config({
 	baseUrl: "resources/js",
 	paths: {
-		"app": "app",
 		"text": "requirejs/text",
 
-		"persona": "//login.persona.org/include.js",
 		"jqueryui": "jquery/jquery-ui-1.10.4.min",
 		"bootstrap": "jquery/bootstrap",
 		"rajo.dom": "rajo/rajo.dom",
 		"rajo.identity.persona": "rajo/rajo.identity.persona",
-		"rajo.pubsub": "rajo/rajo.pubsub",
 		"rajo.service": "rajo/rajo.service",
 		"rajo.singlepage": "rajo/rajo.singlepage",
 		"rajo.ui.bootstrapmodal": "rajo/rajo.ui.bootstrapmodal",
