@@ -27,28 +27,6 @@ html, body {
 	height: 100%;
 }
 
-.layout {
-	height: 100%;
-}
-
-.center, .east, .west, .north, .south {
-	display: inline-block;
-}
-
-.south {
-	height: 135px;
-}
-
-.east {
-	width: 35%;
-	padding-left: 10px;
-}
-
-.center {
-	height: 100%;
-	border-right: 1px solid rgb(200,200,200);
-}
-
 .highlight-row {
   background-color: #d9edf7;
   border-color: #bce8f1;
@@ -64,3 +42,6 @@ html, body {
 .pointer { cursor: default; }
 
 .margin-right-20 { margin-right: 20px; }
+
+.navbar { margin-bottom: 0px; }
+.sortable { cursor: pointer; }
