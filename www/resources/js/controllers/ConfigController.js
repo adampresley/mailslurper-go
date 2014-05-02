@@ -1,13 +1,19 @@
 require(
 	[
-		"jquery", "modules/util/Logger", "modules/util/Blocker", "rajo.pubsub", "rajo.ui.bootstrapmodal", "Ractive",
-		"app/ConfigService"
+		"jquery", "modules/util/Logger", "modules/util/Blocker", "Ractive",
+		"widgets/dialog/Modal"
 	],
-	function($, logger, Blocker, PubSub, BootstrapModal, Ractive, ConfigService) {
+	function($, logger, Blocker, Ractive, Modal) {
 		"use strict";
 
-		Blocker.block("Loading config...");
+		//Blocker.block("Loading config...");
 
+		Modal.error({
+			message: "Your settings have been saved. <strong>Please note that you must restart MailSlurper for these changes to take effect!</strong>",
+			height: 260
+		});
+
+		return;
 		var
 			ractive = new Ractive({
 				el: "content",
