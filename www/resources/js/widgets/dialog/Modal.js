@@ -20,7 +20,21 @@ define(
 			},
 
 			_buildMessage = function(alertClass, glyphiconClass, message) {
-				return "<div class=\"alert " + alertClass + "\"><span class=\"glyphicon " + glyphiconClass + "\"" + _iconStyle + "></span> " + message + "</div>";
+				var
+					result = "<div ";
+
+				if (alertClass.length > 0) {
+					result += "class=\"alert " + alertClass + "\"";
+				}
+
+				result += ">";
+
+				if (glyphiconClass.length > 0) {
+					result += "<span class=\"glyphicon " + glyphiconClass + "\"" + _iconStyle + "></span> ";
+				}
+
+				result += message + "</div>";
+				return result;
 			},
 
 			_destroyDom = function(id) {
@@ -70,6 +84,38 @@ define(
 					]);
 
 					_buildDom(id, _buildMessage("alert-info", "glyphicon-info-sign", config.message), config);
+				},
+
+				yesNo: function(config) {
+					var
+						id = WidgetTools.generateId("widgets-dialog-modal-yesno-");
+
+					config = _getConfig(config, "Question", [
+						{
+							text : "Yes",
+							click: function() {
+								if (config.yes !== undefined) {
+									config.yes();
+								}
+
+								$(this).dialog("close");
+								_destroyDom(id);
+							}
+						},
+						{
+							text : "No",
+							click: function() {
+								if (config.no !== undefined) {
+									config.no();
+								}
+
+								$(this).dialog("close");
+								_destroyDom(id);
+							}
+						}
+					]);
+
+					_buildDom(id, _buildMessage("", "glyphicon-question-sign", config.message), config);
 				}
 
 			};
