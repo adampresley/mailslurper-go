@@ -33,7 +33,7 @@ try:
 		server.sendmail(me, [to], msg.as_string())
 		server.quit()
 
-		#time.sleep(1)
+		time.sleep(1)
 
 
 except Exception as e:

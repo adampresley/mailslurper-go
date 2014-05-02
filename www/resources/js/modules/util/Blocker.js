@@ -25,11 +25,11 @@ define(
 			 * Function: unblock
 			 * Unblocks the page or an element
 			 */
-			unblock: function(el) {
+			unblock: function(el, fn) {
 				if (el === undefined) {
-					$.unblockUI();
+					$.unblockUI({ onUnblock: fn });
 				} else {
-					$(el).unblockUI();
+					$(el).unblockUI({ onUnblock: fn });
 				}
 			}
 		};
