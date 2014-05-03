@@ -62,6 +62,22 @@ if __name__ == "__main__":
 
 			time.sleep(2)
 
+		for index in range(numMails):
+			textBody = "Hello,\nI am mail #{0}.\n\nSincerely,\nAdam Presley".format(index,)
+
+			msg = MIMEText(textBody)
+
+			msg["Subject"] = "Test Mail #{0}".format(index,)
+			msg["From"] = me
+			msg["To"] = to
+			msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S -0700 (UTC)")
+
+			server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
+			server.sendmail(me, [to], msg.as_string())
+			server.quit()
+
+			time.sleep(1)
+
 
 	except Exception as e:
 		print("An error occurred while trying to connect and send the email: {0}".format(e.message))
