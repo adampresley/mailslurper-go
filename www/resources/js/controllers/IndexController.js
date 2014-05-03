@@ -16,6 +16,9 @@ require(
 
 		Blocker.block("Loading mails...");
 
+		$("#homeNav").addClass("active");
+		$("#configNav").removeClass("active");
+
 		$("body").layout({
 			north__resizable: false,
 			north__closable: false,

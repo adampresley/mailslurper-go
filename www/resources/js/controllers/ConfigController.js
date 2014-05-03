@@ -10,6 +10,9 @@ require(
 
 		Blocker.block("Loading config...");
 
+		$("#homeNav").removeClass("active");
+		$("#configNav").addClass("active");
+
 		var
 			ractive = new Ractive({
 				el: "content",
