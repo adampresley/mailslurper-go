@@ -2,7 +2,10 @@ require(
 	[
 		/* Injected dependencies */
 		"jquery", "modules/util/Logger", "modules/util/Blocker",
-		"Ractive", "services/mail/MailCollectionService",
+		"Ractive", "modules/util/FuncTools",
+
+		"services/mail/MailCollectionService",
+		"services/mail/MailService",
 
 		/* Templates */
 		"text!/resources/templates/mail-list.html",
@@ -11,7 +14,7 @@ require(
 		/* Other non-injected dependencies */
 		"layout"
 	],
-	function($, logger, Blocker, Ractive, MailCollectionService, MailListPartial, MailViewPartial) {
+	function($, logger, Blocker, Ractive, FuncTools, MailCollectionService, MailService, MailListPartial, MailViewPartial) {
 		"use strict";
 
 		Blocker.block("Loading mails...");
@@ -118,7 +121,7 @@ require(
 			 * and will display the mail item in a table.
 			 */
 			addMailItemToTable = function(mailItem) {
-				mails.unshift(mailItem);
+				mails.unshift(MailService.parseMailItem(mailItem));
 			},
 
 			/**
@@ -163,8 +166,9 @@ require(
 		 */
 		MailCollectionService.get().done(function(data) {
 			mails = data;
-			mailListRactive.set("mails", mails);
+			mails = FuncTools.map(mails, MailService.parseMailItem);
 
+			mailListRactive.set("mails", mails);
 			Blocker.unblock();
 		});
 
