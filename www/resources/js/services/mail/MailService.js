@@ -1,13 +1,18 @@
 define(
 	[
 		"jquery",
-		"modules/util/FuncTools"
+		"modules/util/FuncTools",
+		"moment"
 	],
-	function($, FuncTools) {
+	function($, FuncTools, moment) {
 		"use strict";
 
 		var
 			service = {
+				formatMailDate: function(dateString) {
+					return moment(dateString).format("MMMM Do YYYY, h:mm:ss a");
+				},
+
 				isMultipartMail: function(contentType, boundary) {
 					return (contentType.indexOf("multipart") > -1 && boundary.length > 0);
 				},
