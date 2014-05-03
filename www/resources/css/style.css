@@ -45,3 +45,5 @@ html, body {
 
 .navbar { margin-bottom: 0px; }
 .sortable { cursor: pointer; }
+
+.mail-view { padding: 10px; }
