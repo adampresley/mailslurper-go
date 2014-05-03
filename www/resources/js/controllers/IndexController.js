@@ -142,7 +142,7 @@ require(
 		mailListRactive.on({
 			viewMailItem: function(e) {
 				mailViewRactive.set("subject", e.context.subject);
-				mailViewRactive.set("dateSent", e.context.dateSent);
+				mailViewRactive.set("dateSent", MailService.formatMailDate(e.context.dateSent));
 				mailViewRactive.set("fromAddress", e.context.fromAddress);
 				mailViewRactive.set("mailView", e.context.body);
 
