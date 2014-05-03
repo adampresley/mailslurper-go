@@ -85,6 +85,8 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 	var date string
 	var subject string
 	var body string
+	var contentType string
+	var boundary string
 
 	switch command {
 	case HELO:
@@ -115,7 +117,7 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 		return result
 
 	case DATA:
-		result, response, date, subject, body = parser.Process_DATA(strings.TrimSpace(input))
+		result, response, date, subject, body, contentType, boundary = parser.Process_DATA(strings.TrimSpace(input))
 		if result == false {
 			fmt.Println("An error occurred while reading the DATA chunk: ", response)
 		} else {
@@ -123,6 +125,8 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 			parser.MailItem.Subject = subject
 			parser.MailItem.DateSent = date
 			parser.MailItem.XMailer = "MailSlurper!"
+			parser.MailItem.ContentType = contentType
+			parser.MailItem.Boundary = boundary
 		}
 
 		return result
@@ -249,13 +253,15 @@ This function will return the following items.
 	3. Mail date sent header
 	4. Mail subject header
 	5. Mail message body
+	6. Content type
+	7. Boundary marker for multipart messages
 */
-func (parser *Parser) Process_DATA(line string) (bool, string, string, string, string) {
+func (parser *Parser) Process_DATA(line string) (bool, string, string, string, string, string, string) {
 	var dataBuffer bytes.Buffer
 
 	commandCheck := strings.Index(strings.ToLower(line), "data")
 	if commandCheck < 0 {
-		return false, "Invalid command", "", "", ""
+		return false, "Invalid command", "", "", "", "", ""
 	}
 
 	parser.SendResponse("354 End data with <CR><LF>.<CR><LF>")
@@ -289,7 +295,7 @@ func (parser *Parser) Process_DATA(line string) (bool, string, string, string, s
 	headerData := parseDataHeader(headerBodySplit[0])
 
 	parser.SendOkResponse()
-	return true, "Success", headerData["date"], headerData["subject"], strings.Join(headerBodySplit[1:], "\r\n\r\n")
+	return true, "Success", headerData["date"], headerData["subject"], strings.Join(headerBodySplit[1:], "\r\n\r\n"), headerData["contentType"], headerData["boundary"]
 }
 
 /*
@@ -427,6 +433,8 @@ func parseDataHeader(headerLines string) map[string]string {
 	result["xmailer"] = "MailSlurper!"
 	result["date"] = ""
 	result["subject"] = ""
+	result["contentType"] = ""
+	result["boundary"] = ""
 
 	for index := 0; index < numLines; index++ {
 		splitHeaderItem := strings.Split(splitHeader[index], ":")
@@ -439,6 +447,17 @@ func parseDataHeader(headerLines string) map[string]string {
 		if strings.ToLower(splitHeaderItem[0]) == "subject" {
 			result["subject"] = strings.TrimSpace(strings.Join(splitHeaderItem[1:], ""))
 			fmt.Println("Subject: ", result["subject"])
+		}
+
+		if strings.ToLower(splitHeaderItem[0]) == "content-type" {
+			result["contentType"] = strings.TrimSpace(strings.Join(splitHeaderItem[1:], ""))
+			fmt.Println("Content Type: ", result["contentType"])
+		}
+
+		if strings.Contains(strings.ToLower(splitHeaderItem[0]), "boundary") {
+			subsplit := strings.Split(splitHeaderItem[0], "=")
+			result["boundary"] = strings.Replace(strings.Join(subsplit[1:], "="), "\"", "", -1)
+			fmt.Println("Boundary: ", result["boundary"])
 		}
 	}
 

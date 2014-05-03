@@ -51,7 +51,9 @@ func (ms *MailStorage) Connect(filename string) error {
 			toAddressList text,
 			subject text,
 			xmailer text,
-			body text
+			body text,
+			contentType text,
+			boundary text
 		);
 	`
 
@@ -86,7 +88,7 @@ func (ms *MailStorage) StartWriteListener(dbWriteChannel chan MailItemStruct) {
 			panic(fmt.Sprintf("Error starting insert transaction: %s", err))
 		}
 
-		statement, err := transaction.Prepare("insert into mailitem (dateSent, fromAddress, toAddressList, subject, xmailer, body) values (?, ?, ?, ?, ?, ?)")
+		statement, err := transaction.Prepare("insert into mailitem (dateSent, fromAddress, toAddressList, subject, xmailer, body, contentType, boundary) values (?, ?, ?, ?, ?, ?, ?, ?)")
 		if err != nil {
 			panic(fmt.Sprintf("Erorr preparing insert statement: %s", err))
 		}
@@ -100,6 +102,8 @@ func (ms *MailStorage) StartWriteListener(dbWriteChannel chan MailItemStruct) {
 			mailItem.Subject,
 			mailItem.XMailer,
 			mailItem.Body,
+			mailItem.ContentType,
+			mailItem.Boundary,
 		)
 
 		if err != nil {
@@ -117,7 +121,7 @@ Retrieves all stored mail items as an array of MailItemStruct items.
 func (ms *MailStorage) GetMails() []MailItemStruct {
 	result := make([]MailItemStruct, 0)
 
-	rows, err := ms.Db.Query("SELECT dateSent, fromAddress, toAddressList, subject, xmailer, body FROM mailitem ORDER BY dateSent DESC")
+	rows, err := ms.Db.Query("SELECT dateSent, fromAddress, toAddressList, subject, xmailer, body, contentType, boundary FROM mailitem ORDER BY dateSent DESC")
 	if err != nil {
 		panic("Error running query to get mail items")
 	}
@@ -131,8 +135,10 @@ func (ms *MailStorage) GetMails() []MailItemStruct {
 		var subject string
 		var xmailer string
 		var body string
+		var contentType string
+		var boundary string
 
-		rows.Scan(&dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body)
+		rows.Scan(&dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary)
 
 		newItem := MailItemStruct{
 			DateSent:    dateSent,
@@ -141,6 +147,8 @@ func (ms *MailStorage) GetMails() []MailItemStruct {
 			Subject:     subject,
 			XMailer:     xmailer,
 			Body:        body,
+			ContentType: contentType,
+			Boundary:    boundary,
 		}
 
 		result = append(result, newItem)

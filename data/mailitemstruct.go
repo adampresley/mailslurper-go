@@ -16,4 +16,6 @@ type MailItemStruct struct {
 	Subject     string   `json:"subject"`
 	XMailer     string   `json:"xmailer"`
 	Body        string   `json:"body"`
+	ContentType string   `json:"contentType"`
+	Boundary    string   `json:"boundary"`
 }
