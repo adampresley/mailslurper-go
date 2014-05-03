@@ -29,7 +29,11 @@ define(
 				if (el === undefined) {
 					$.unblockUI({ onUnblock: fn });
 				} else {
-					$(el).unblockUI({ onUnblock: fn });
+					if (typeof el === "function") {
+						$.unblockUI({ onUnblock: el });
+					} else {
+						$(el).unblockUI({ onUnblock: fn });
+					}
 				}
 			}
 		};
