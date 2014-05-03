@@ -20,6 +20,8 @@ define(
 		"modules/util/Http"
 	],
 	function(Http) {
+		"use strict";
+
 		var endpoint = "/config";
 
 		return {
