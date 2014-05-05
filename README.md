@@ -1,5 +1,6 @@
 MailSlurper-Go
 ==============
+
 Simple mail SMTP server that slurps mail into oblivion! Useful only for local development
 MailSlurper runs on port 8000 (though it can be changed) and listens for outgoing mail send
 requests. When one is received the mail item is stored in a local SQLite database.
@@ -125,7 +126,7 @@ Release Notes
 License
 -------
 The MIT License (MIT)
-Copyright (c) 2013 Adam Presley
+Copyright (c) 2013-2014 Adam Presley
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
