@@ -104,6 +104,15 @@ The package documentation is all there.
 Release Notes
 -------------
 
+**2014-05-05**
+* Mails that contain HTML or are multipart text and HTML now display HTML in the viewer
+* Added ability to search the subject and bodies of mails to filter mail list
+* Added sorting of mail items
+* Addressed a date parsing issue with mails that have the timezone wrapped in parentheses
+* Addressed browser resize issue. Layout now is resizable and more responsive
+* Removed unneeded code
+* Updated several libraries
+
 **2013-12-15**
 * Added new interface to the administrator to change settings to *config.json*
 * Some code cleanup
@@ -122,6 +131,22 @@ Release Notes
 **2013-12-04**
 * Initial conversion of the Groovy+Grails version of MailSlurper to Google Go. It is still pretty rough, but the mechanics are there
 
+Copyright Information
+---------------------
+
+Mailslurper makes use of many libraries and tools. They are copyright of their respective owners.
+
+* jQuery - Copyright 2014 The jQuery Foundation
+* jQuery UI - Copyright 2014 The jQuery Foundation
+* Ractive - Copyright 2012-2014 Rich Harris
+* Bootstrap - Copyright 2014 Twitter
+* RequireJS - Copyright 2010-2013, The Dojo Foundation
+* jQuery BlockUI - Copyright 2007-2009 M. Alsup
+* jQuery UI Layout - Copyright 2013 Kevin Dalman
+* Moment.js - Copyright 2011-2014 Tim Wood, Iskren Chernev, Moment.js contributors
+* Google Go - Copyright 2012 The Go Authors
+* go-sqlite3 - Copyright 2012-2014 Yasuhiro Matsumoto
+* Gorilla Web Toolkit - Copyright 2012 Rodrigo Moraes
 
 License
 -------
