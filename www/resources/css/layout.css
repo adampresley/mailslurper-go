@@ -185,3 +185,5 @@ iframe.ui-layout-mask {}	/* extra mask for objects/applets */
 		overflow:	visible !important;
 	}
 }
+
+.ui-layout-north { height: 35px !important; overflow: hidden; }

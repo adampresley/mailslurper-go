@@ -21,14 +21,7 @@ require(
 
 		$("#homeNav").addClass("active");
 		$("#configNav").removeClass("active");
-
-		$("body").layout({
-			north__resizable: false,
-			north__closable: false,
-			south__resizable: false,
-			south__closable: false,
-			east__size: "40%"
-		});
+		$("#searchNav").removeClass("active").removeClass("hide");
 
 		var
 			mails = [],
@@ -93,6 +86,17 @@ require(
 							}
 						}
 					}
+				},
+
+				complete: function() {
+					$("body").layout({
+						north__resizable: false,
+						north__closable: false,
+						south__resizable: false,
+						south__closable: false,
+						east__size: "40%"
+					});
+
 				}
 			}),
 
