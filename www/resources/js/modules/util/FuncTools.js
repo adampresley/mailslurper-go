@@ -50,6 +50,21 @@ define([], function() {
 		},
 
 		/**
+		 * Function: filter
+		 * Sends each item in *items* through the function *fn*. If the
+		 * function returns true the item is included in the resulting array.
+		 */
+		filter: function(items, fn) {
+			var result = [];
+
+			FuncTools.each(items, function(item) {
+				if (fn(item)) result.push(item);
+			});
+
+			return result;
+		},
+
+		/**
 		 * Function: map
 		 * Applies a function to each item in the input array or object. This function may return
 		 * the input transformed in some way, and the final result is an array of each transformed

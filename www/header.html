@@ -31,8 +31,7 @@
 
 <body>
 	<div class="ui-layout-north">
-		<div class="navbar navbar-default navbar-static-top" role="navigation">
-			<div class="container">
+		<div class="navbar navbar-inverse navbar-static-top" role="navigation">
 				<div class="navbar-header">
 					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
 						<span class="icon-bar"></span>
@@ -44,11 +43,13 @@
 
 				<div class="navbar-collapse collapse">
 					<ul class="nav navbar-nav">
-						<li id="homeNav"><a href="/">Home</a></li>
-						<li id="configNav"><a href="/configuration">Configure</a></li>
+						<li id="homeNav"><a href="/"><span class="glyphicon glyphicon-home"></span></a></li>
+						<li id="configNav"><a href="/configuration"><span class="glyphicon glyphicon-cog"></span></a></li>
+
+						<li id="searchNav" class="hide"><a href="#"><span class="glyphicon glyphicon-search"></span> &nbsp;Search</a></li>
+						<li id="clearNav" class="hide"><a href="#"><span class="glyphicon glyphicon-minus"></span> &nbsp;Clear</a></li>
 					</ul>
 				</div>
-			</div>
 		</div>
 	</div>
 

@@ -1,15 +1,17 @@
 <div id="mails">
-	<table class="table">
+	<table class="table" id="mailItemsHeader">
 		<thead>
 			<tr>
-				<th class="sortable" on-click="sort:dateSent">Date <span class="{{getSortIcon('dateSent')}}"></span></th>
-				<th class="sortable" on-click="sort:subject">Subject <span class="{{getSortIcon('subject')}}"></span></th>
-				<th class="sortable" on-click="sort:fromAddress">From <span class="{{getSortIcon('fromAddress')}}"></span></th>
-				<th class="sortable" on-click="sort:toAddresses">To <span class="{{getSortIcon('toAddresses')}}"></span></th>
+				<th width="15%" class="sortable" on-click="sort:dateSent">Date <span class="{{getSortIcon('dateSent')}}"></span></th>
+				<th width="45%" class="sortable" on-click="sort:subject">Subject <span class="{{getSortIcon('subject')}}"></span></th>
+				<th width="20%" class="sortable" on-click="sort:fromAddress">From <span class="{{getSortIcon('fromAddress')}}"></span></th>
+				<th width="20%" class="sortable" on-click="sort:toAddresses">To <span class="{{getSortIcon('toAddresses')}}"></span></th>
 			</tr>
 		</thead>
+	</table>
 
-		<tbody style="overflow: auto;">
+	<table class="table" id="mailItemsTable">
+		<tbody>
 			{{#mails.length <= 0}}
 				<tr>
 					<td colspan="4">
@@ -21,10 +23,10 @@
 			{{#mails.length > 0}}
 				{{# sort(mails, sortColumn) }}
 					<tr on-click="viewMailItem" class="mailrow">
-						<td>{{dateSent}}</td>
-						<td>{{subject}}</td>
-						<td>{{fromAddress}}</td>
-						<td>{{(compressTo(toAddresses))}}</td>
+						<td width="15%">{{dateSent}}</td>
+						<td width="45%">{{subject}}</td>
+						<td width="20%">{{fromAddress}}</td>
+						<td width="20%">{{(compressTo(toAddresses))}}</td>
 					</tr>
 				{{/mails}}
 			{{/mails.length > 0}}
