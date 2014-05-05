@@ -1,5 +1,5 @@
 <div id="mails">
-	<table class="table mailItemsHeader" id="mailItemsTable">
+	<table class="table" id="mailItemsHeader">
 		<thead>
 			<tr>
 				<th width="15%" class="sortable" on-click="sort:dateSent">Date <span class="{{getSortIcon('dateSent')}}"></span></th>
@@ -10,7 +10,7 @@
 		</thead>
 	</table>
 
-	<table class="table">
+	<table class="table" id="mailItemsTable">
 		<tbody>
 			{{#mails.length <= 0}}
 				<tr>

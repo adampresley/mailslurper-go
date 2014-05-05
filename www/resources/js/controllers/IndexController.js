@@ -7,24 +7,24 @@ require(
 		"services/mail/MailCollectionService",
 		"services/mail/MailService",
 
+
 		/* Templates */
 		"text!/resources/templates/mail-list.html",
 		"text!/resources/templates/mail-view.html",
 
 		/* Other non-injected dependencies */
-		"layout"
+		"layout",
+		"widgets/mail/MailSearch"
 	],
 	function($, logger, Blocker, Ractive, FuncTools, MailCollectionService, MailService, MailListPartial, MailViewPartial) {
 		"use strict";
 
 		Blocker.block("Loading mails...");
 
-		$("#homeNav").addClass("active");
-		$("#configNav").removeClass("active");
-		$("#searchNav").removeClass("active").removeClass("hide");
-
 		var
 			mails = [],
+			mailsBackup = [],
+
 
 			/*
 			 * Ractive instance to handle the list of mail items
@@ -97,6 +97,17 @@ require(
 						east__size: "40%"
 					});
 
+					$("#homeNav").addClass("active");
+					$("#searchNav").removeClass("hide");
+					$("#clearNav").removeClass("hide");
+
+					$("#mailSearch").mailSearch({
+						search: search,
+						clear: clear
+					});
+
+					$("#searchNav").click(function() { $("#mailSearch").mailSearch("open"); });
+					$("#clearNav").click(function() { clear() });
 				}
 			}),
 
@@ -126,6 +137,53 @@ require(
 			 */
 			addMailItemToTable = function(mailItem) {
 				mails.unshift(MailService.parseMailItem(mailItem));
+				mailsBackup = mails;
+			},
+
+			/**
+			 * Fired off when the clear button is clicked in the search box
+			 */
+			clear = function() {
+				logger("Clearing search");
+
+				mails = mailsBackup;
+				mailListRactive.set("mails", mails);
+				clearMailView();
+			},
+
+			/**
+			 * Clears mail view and selected mail item.
+			 */
+			clearMailView = function() {
+				$("#mailItemsTable tr").removeClass("highlight-row");
+				setMailView("", "", "", "");
+			},
+
+			/**
+			 * Fired off when a search is executed
+			 */
+			search = function(term) {
+				logger("Searched for '%s'", term);
+
+				mails = FuncTools.filter(mailsBackup, function(item) {
+					if (item.subject.toLowerCase().indexOf(term) > -1) return true;
+					if (item.body.toLowerCase().indexOf(term) > -1) return true;
+					return false;
+				});
+
+				logger("Found %d item(s)", mails.length);
+				mailListRactive.set("mails", mails);
+				clearMailView();
+			},
+
+			/**
+			 * Updates Ractive with mail data to update the mail view DOM
+			 */
+			setMailView = function(subject, dateSent, fromAddress, body) {
+				mailViewRactive.set("subject", subject);
+				mailViewRactive.set("dateSent", ((dateSent.length > 0) ? MailService.formatMailDate(dateSent) : ""));
+				mailViewRactive.set("fromAddress", fromAddress);
+				mailViewRactive.set("mailView", body);
 			},
 
 			/**
@@ -145,10 +203,7 @@ require(
 
 		mailListRactive.on({
 			viewMailItem: function(e) {
-				mailViewRactive.set("subject", e.context.subject);
-				mailViewRactive.set("dateSent", MailService.formatMailDate(e.context.dateSent));
-				mailViewRactive.set("fromAddress", e.context.fromAddress);
-				mailViewRactive.set("mailView", e.context.body);
+				setMailView(e.context.subject, e.context.dateSent, e.context.fromAddress, e.context.body);
 
 				$(".mailrow").removeClass("highlight-row");
 				$(e.node).addClass("highlight-row");
@@ -171,6 +226,7 @@ require(
 		MailCollectionService.get().done(function(data) {
 			mails = data;
 			mails = FuncTools.map(mails, MailService.parseMailItem);
+			mailsBackup = mails;
 
 			mailListRactive.set("mails", mails);
 			Blocker.unblock();

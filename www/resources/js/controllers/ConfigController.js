@@ -3,15 +3,16 @@ require(
 		"jquery", "modules/util/Logger", "modules/util/Blocker", "Ractive", "widgets/dialog/Modal",
 		"services/config/ConfigService",
 
-		"text!/resources/templates/config-template.html"
+		/* Templates */
+		"text!/resources/templates/config-template.html",
+
+		/* Other non-injected dependencies */
+		"layout",
 	],
 	function($, logger, Blocker, Ractive, Modal, ConfigService, ConfigTemplate) {
 		"use strict";
 
 		Blocker.block("Loading config...");
-
-		$("#homeNav").removeClass("active");
-		$("#configNav").addClass("active");
 
 		var
 			ractive = new Ractive({
@@ -25,6 +26,17 @@ require(
 						smtpAddress: "0.0.0.0",
 						smtpPort: 8000
 					}
+				},
+
+				complete: function() {
+					$("body").layout({
+						north__resizable: false,
+						north__closable: false,
+						south__resizable: false,
+						south__closable: false
+					});
+
+					$("#configNav").addClass("active");
 				}
 			});
 

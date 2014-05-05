@@ -53,6 +53,13 @@ html, body {
 .sortable { cursor: pointer; }
 
 #mailItemsTable { margin-bottom: 0px; }
+#mailItemsHeader { margin-bottom: 0px; }
 .mail-view { padding: 10px; }
-
+.mailrow { cursor: default; }
 #searchNav { margin-left: 25px; }
+
+.credit {
+	position: relative;
+	top: 15px;
+	left: 15px;
+}
