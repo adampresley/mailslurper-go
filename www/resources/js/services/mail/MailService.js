@@ -56,6 +56,8 @@ define(
 					 * because the very last boundary marker has two dashes at the
 					 * end. We want the next to last body because the RFC-1341
 					 * specifies that the fanciest version of the mail will be last.
+					 *
+					 * TODO: This logic is flawed. The LAST-LAST items will be attachments
 					 */
 					if (split.length > 2 && ((split.length - 2) > 0)) {
 						return service.parseHTMLPart($.trim(split[split.length - 2]));
