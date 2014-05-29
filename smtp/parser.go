@@ -293,9 +293,12 @@ func (parser *Parser) Process_DATA(line string) (bool, string, string, string, s
 	 */
 	parser.State = STATE_DATA_HEADER
 	headerData := parseDataHeader(headerBodySplit[0])
+	body := strings.Join(headerBodySplit[1:], "\r\n\r\n")
+
+	fmt.Printf("Body: %s\n\n", body)
 
 	parser.SendOkResponse()
-	return true, "Success", headerData["date"], headerData["subject"], strings.Join(headerBodySplit[1:], "\r\n\r\n"), headerData["contentType"], headerData["boundary"]
+	return true, "Success", headerData["date"], headerData["subject"], body, headerData["contentType"], headerData["boundary"]
 }
 
 /*
