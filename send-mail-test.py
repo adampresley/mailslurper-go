@@ -31,7 +31,7 @@ def getQuote():
 		}
 
 if __name__ == "__main__":
-	numMails = 5
+	numMails = 1
 	address = "127.0.0.1"
 	smtpPort = 8000
 

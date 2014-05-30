@@ -45,15 +45,31 @@ func (ms *MailStorage) Connect(filename string) error {
 	 * Create the mailitem table.
 	 */
 	sql := `
-		create table mailitem (
-			dateSent text,
-			fromAddress text,
-			toAddressList text,
-			subject text,
-			xmailer text,
-			body text,
-			contentType text,
-			boundary text
+		CREATE TABLE mailitem (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			dateSent TEXT,
+			fromAddress TEXT,
+			toAddressList TEXT,
+			subject TEXT,
+			xmailer TEXT,
+			body TEXT,
+			contentType TEXT,
+			boundary TEXT
+		);
+	`
+
+	_, err = ms.Db.Exec(sql)
+	if err != nil {
+		return err
+	}
+
+	sql = `
+		CREATE TABLE attachment (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			mailItemId INTEGER,
+			fileName TEXT,
+			contentType TEXT,
+			content TEXT
 		);
 	`
 
@@ -88,7 +104,7 @@ func (ms *MailStorage) StartWriteListener(dbWriteChannel chan MailItemStruct) {
 			panic(fmt.Sprintf("Error starting insert transaction: %s", err))
 		}
 
-		statement, err := transaction.Prepare("insert into mailitem (dateSent, fromAddress, toAddressList, subject, xmailer, body, contentType, boundary) values (?, ?, ?, ?, ?, ?, ?, ?)")
+		statement, err := transaction.Prepare("INSERT INTO mailitem (dateSent, fromAddress, toAddressList, subject, xmailer, body, contentType, boundary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
 		if err != nil {
 			panic(fmt.Sprintf("Erorr preparing insert statement: %s", err))
 		}

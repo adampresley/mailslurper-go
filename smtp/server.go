@@ -73,7 +73,7 @@ func (s *Server) ProcessRequests() {
 		}
 
 		go func(c net.Conn, dbWriter chan data.MailItemStruct) {
-			fmt.Println("Processing SMTP request...")
+			fmt.Printf("\n----------------------------------------------\nProcessing SMTP request...\n----------------------------------------------\n")
 			defer c.Close()
 
 			/*

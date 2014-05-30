@@ -137,6 +137,16 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 }
 
 /*
+Takes the raw body contents parsed from mail contents and returns
+the message body and, if there are any attachments, an array of
+Attachment structures. The body will either be pure text content, or
+if HTML is attached then that will be returned.
+func (parser *Parser) ParseBody(contents string) (string, []data.Attachment) {
+
+}
+*/
+
+/*
 Takes a string and returns the integer command representation. For example
 if the string contains "DATA" then the value 1 (the constant DATA) will be returned.
 */
@@ -279,6 +289,8 @@ func (parser *Parser) Process_DATA(line string) (bool, string, string, string, s
 		}
 	}
 
+	fmt.Printf("\n**INCOMING BUFFER:**\n %s\n**END INCOMING BUFFER**\n\n", dataBuffer.String())
+
 	/*
 	 * Split the DATA content by CRLF CRLF. The first item will be the data
 	 * headers. Everything past that is body/message.
@@ -293,9 +305,11 @@ func (parser *Parser) Process_DATA(line string) (bool, string, string, string, s
 	 */
 	parser.State = STATE_DATA_HEADER
 	headerData := parseDataHeader(headerBodySplit[0])
+
+	//body := parseBody(strings.Join(headerBodySplit[1:], "\r\n\r\n"))
 	body := strings.Join(headerBodySplit[1:], "\r\n\r\n")
 
-	fmt.Printf("Body: %s\n\n", body)
+	//fmt.Printf("Body: %s\n\n", body)
 
 	parser.SendOkResponse()
 	return true, "Success", headerData["date"], headerData["subject"], body, headerData["contentType"], headerData["boundary"]
@@ -420,6 +434,90 @@ func (parser *Parser) SendResponse(resp string) (bool, string) {
 	}
 
 	return result, response
+}
+
+/*
+Returns a filename from a Content-Disposition header of type "attachment".
+*/
+func getFileNameFromContentDisposition(contentDisposition string) (string, error) {
+	dispositionSplit := strings.Split(contentDisposition, ";")
+
+	if len(dispositionSplit) < 2 {
+		return "", fmt.Errorf("Content-Disposition does not contain an attachment file name")
+	}
+
+	if strings.TrimSpace(dispositionSplit[0]) != "attachment" {
+		return "", fmt.Errorf("Content-Disposition does not contain an attachment file name")
+	}
+
+	/*
+	 * The second part of the split should look like 'filename="somefilename.jpg"'
+	 */
+	filenameSplit := strings.Split(strings.Join(dispositionSplit[1:], ";"), "=")
+
+	if len(filenameSplit) < 2 || strings.TrimSpace(strings.ToLower(filenameSplit[0])) != "filename" {
+		return "", fmt.Errorf("Content-Disposition is specified as 'attachment' but does not contain a file name")
+	}
+
+	return strings.TrimSpace(strings.Join(filenameSplit[1:], "=")), nil
+}
+
+/*
+Takes a single header line that consists of a key/value pair
+separated by a colon and return the key and value.
+*/
+func parseHeaderItem(headerLine string) (string, string) {
+	s := strings.Split(headerLine, ":")
+	key := ""
+	value := ""
+
+	if len(s) > 0 {
+		key = s[1]
+	}
+
+	if len(s) > 1 && !strings.Contains(key, "date") {
+		value = strings.TrimSpace(strings.Join(s[1:], ""))
+	} else if len(s) > 1 && strings.Contains(key, "date") {
+		value = strings.TrimSpace(strings.Join(s[1:], ":"))
+	}
+
+	return key, value
+}
+
+/*
+Takes a string block and parses header items. This string should
+be the lines preceding the body of an attachment block. Returns a
+map of those parsed headers, where the key is the header name and the
+value is the header value.
+*/
+func parseAttachmentHeader(headerLines string) map[string]string {
+	splitHeader := strings.Split(headerLines, "\r\n")
+	numLines := len(splitHeader)
+
+	result := make(map[string]string, numLines)
+	key := ""
+	value := ""
+
+	fmt.Printf("Parsing attaachment header...\n")
+
+	result["contentType"] = ""
+	result["fileName"] = ""
+
+	for index := 0; index < numLines; index++ {
+		key, value = parseHeaderItem(splitHeader[index])
+
+		switch strings.ToLower(key) {
+		case "content-type":
+			result["contentType"] = value
+			fmt.Printf("Content-Type: %s\n", value)
+
+		case "content-disposition":
+			result["fileName"], _ = getFileNameFromContentDisposition(value)
+			fmt.Printf("File name: %s\n", result["fileName"])
+		}
+	}
+
+	return result
 }
 
 /*
