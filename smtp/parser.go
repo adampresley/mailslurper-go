@@ -304,15 +304,19 @@ func (parser *Parser) Process_DATA(line string) (bool, string, string, string, s
 	 * Parse the header content
 	 */
 	parser.State = STATE_DATA_HEADER
-	headerData := parseDataHeader(headerBodySplit[0])
+
+	header := &MailHeader{
+		Contents:         headerBodySplit[0],
+	}
+
+	header.Parse()
 
 	//body := parseBody(strings.Join(headerBodySplit[1:], "\r\n\r\n"))
+	parser.State = STATE_BODY
 	body := strings.Join(headerBodySplit[1:], "\r\n\r\n")
 
-	//fmt.Printf("Body: %s\n\n", body)
-
 	parser.SendOkResponse()
-	return true, "Success", headerData["date"], headerData["subject"], body, headerData["contentType"], headerData["boundary"]
+	return true, "Success", header.Date, header.Subject, body, header.ContentType, header.Boundary
 }
 
 /*
@@ -515,78 +519,6 @@ func parseAttachmentHeader(headerLines string) map[string]string {
 			result["fileName"], _ = getFileNameFromContentDisposition(value)
 			fmt.Printf("File name: %s\n", result["fileName"])
 		}
-	}
-
-	return result
-}
-
-/*
-Takes a string block and parses header items. Returns a map of
-those parsed headers, where the key is the header name and the
-value is the header value.
-*/
-func parseDataHeader(headerLines string) map[string]string {
-	splitHeader := strings.Split(headerLines, "\r\n")
-	numLines := len(splitHeader)
-
-	result := make(map[string]string, numLines)
-
-	result["xmailer"] = "MailSlurper!"
-	result["date"] = ""
-	result["subject"] = ""
-	result["contentType"] = ""
-	result["boundary"] = ""
-
-	for index := 0; index < numLines; index++ {
-		splitHeaderItem := strings.Split(splitHeader[index], ":")
-
-		if strings.ToLower(splitHeaderItem[0]) == "date" {
-			result["date"] = parseDateTime(strings.TrimSpace(strings.Join(splitHeaderItem[1:], ":")))
-			fmt.Println("Date: ", result["date"])
-		}
-
-		if strings.ToLower(splitHeaderItem[0]) == "subject" {
-			result["subject"] = strings.TrimSpace(strings.Join(splitHeaderItem[1:], ""))
-			fmt.Println("Subject: ", result["subject"])
-		}
-
-		if strings.ToLower(splitHeaderItem[0]) == "content-type" {
-			result["contentType"] = strings.TrimSpace(strings.Join(splitHeaderItem[1:], ""))
-			fmt.Println("Content Type: ", result["contentType"])
-		}
-
-		if strings.Contains(strings.ToLower(splitHeaderItem[0]), "boundary") {
-			subsplit := strings.Split(splitHeaderItem[0], "=")
-			result["boundary"] = strings.Replace(strings.Join(subsplit[1:], "="), "\"", "", -1)
-			fmt.Println("Boundary: ", result["boundary"])
-		}
-	}
-
-	return result
-}
-
-/*
-Takes a date/time string and attempts to parse it and return a newly formatted
-date/time that looks like YYYY-MM-DD HH:MM:SS
-*/
-func parseDateTime(dateString string) string {
-	outputForm := "2006-01-02 15:04:05"
-	firstForm := "Mon, 02 Jan 2006 15:04:05 -0700 MST"
-	secondForm := "Mon, 02 Jan 2006 15:04:05 -0700 (MST)"
-
-	result := ""
-
-	t, err := time.Parse(firstForm, dateString)
-	if err != nil {
-		t, err = time.Parse(secondForm, dateString)
-		if err != nil {
-			fmt.Printf("Error parsing date: %s\n", err)
-			result = dateString
-		} else {
-			result = t.Format(outputForm)
-		}
-	} else {
-		result = t.Format(outputForm)
 	}
 
 	return result
