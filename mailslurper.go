@@ -6,12 +6,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 
 	"github.com/adampresley/mailslurper/admin/controllers"
-	"github.com/adampresley/mailslurper/admin/websockets"
-	"github.com/adampresley/mailslurper/data"
 	"github.com/adampresley/mailslurper/settings"
 	"github.com/adampresley/mailslurper/smtp"
 	"github.com/gorilla/mux"
@@ -30,7 +29,7 @@ func main() {
 
 	err := settings.Config.LoadSettings("config.json")
 	if err != nil {
-		fmt.Printf("There was an error reading your config.json settings file: %s", err)
+		log.Println("There was an error reading your config.json settings file: ", err)
 		return
 	}
 
@@ -42,7 +41,7 @@ func main() {
 	 * Setup global database connection handle
 	 */
 	setupGlobalDatabaseConnection()
-	defer data.Storage.Disconnect()
+	defer smtp.Storage.Disconnect()
 
 	/*
 	 * Setup the SMTP listener
@@ -66,7 +65,9 @@ func main() {
 	requestRouter.HandleFunc("/", controllers.Home).Methods("GET")
 
 	// Mail items
+	requestRouter.HandleFunc("/mail", controllers.GetMailItem).Methods("GET")
 	requestRouter.HandleFunc("/mails", controllers.GetMailCollection).Methods("GET")
+	requestRouter.HandleFunc("/attachment", controllers.DownloadAttachment).Methods("GET")
 
 	// Configuration
 	requestRouter.HandleFunc("/configuration", controllers.Config).Methods("GET")
@@ -74,18 +75,18 @@ func main() {
 	requestRouter.HandleFunc("/config", controllers.SaveConfig).Methods("PUT")
 
 	// Web-sockets
-	requestRouter.HandleFunc("/ws", websockets.WebsocketHandler)
+	requestRouter.HandleFunc("/ws", smtp.WebsocketHandler)
 
 	// Static requests
 	requestRouter.PathPrefix("/resources/").Handler(http.StripPrefix("/resources/", http.FileServer(http.Dir(staticPath))))
 
-	fmt.Printf("MailSlurper administrator started on %s (%s)\n\n", settings.Config.GetFullListenAddress(), settings.Config.WWW)
+	log.Printf("MailSlurper administrator started on %s (%s)\n\n", settings.Config.GetFullListenAddress(), settings.Config.WWW)
 	http.ListenAndServe(settings.Config.GetFullListenAddress(), requestRouter)
 }
 
 func setupGlobalDatabaseConnection() {
-	data.Storage = data.MailStorage{}
-	err := data.Storage.Connect("./mail.db")
+	smtp.Storage = smtp.MailStorage{}
+	err := smtp.Storage.Connect("./mail.db")
 
 	if err != nil {
 		panic("Unable to create database")

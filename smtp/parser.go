@@ -6,12 +6,10 @@ package smtp
 
 import (
 	"bytes"
-	"fmt"
+	"log"
 	"net"
 	"strings"
 	"time"
-
-	"github.com/adampresley/mailslurper/data"
 )
 
 // Constants representing the commands that an SMTP client will
@@ -70,7 +68,7 @@ var Commands = map[string]int{
 type Parser struct {
 	State      int
 	Connection net.Conn
-	MailItem   data.MailItemStruct
+	MailItem   MailItemStruct
 }
 
 /*
@@ -82,25 +80,21 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 	var result bool
 	var response string
 
-	var date string
-	var subject string
-	var body string
-	var contentType string
-	var boundary string
+	var headers *MailHeader
+	var body *MailBody
 
 	switch command {
 	case HELO:
 		result, response = parser.Process_HELO(strings.TrimSpace(input))
-		fmt.Println(response)
 		return result
 
 	case MAIL:
 		result, response = parser.Process_MAIL(strings.TrimSpace(input))
 		if result == false {
-			fmt.Println("An error occurred processing the MAIL FROM command: ", response)
+			log.Println("An error occurred processing the MAIL FROM command: ", response)
 		} else {
 			parser.MailItem.FromAddress = response
-			fmt.Println("Mail from: ", parser.MailItem.FromAddress)
+			log.Println("Mail from: ", parser.MailItem.FromAddress)
 		}
 
 		return result
@@ -108,25 +102,30 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 	case RCPT:
 		result, response = parser.Process_RCPT(strings.TrimSpace(input))
 		if result == false {
-			fmt.Println("An error occurred process the RCPT TO command: ", response)
+			log.Println("An error occurred process the RCPT TO command: ", response)
 		} else {
 			parser.MailItem.ToAddresses = append(parser.MailItem.ToAddresses, response)
-			fmt.Printf("Mail to: %s\n", response)
 		}
 
 		return result
 
 	case DATA:
-		result, response, date, subject, body, contentType, boundary = parser.Process_DATA(strings.TrimSpace(input))
+		result, response, headers, body = parser.Process_DATA(strings.TrimSpace(input))
 		if result == false {
-			fmt.Println("An error occurred while reading the DATA chunk: ", response)
+			log.Println("An error occurred while reading the DATA chunk: ", response)
 		} else {
-			parser.MailItem.Body = body
-			parser.MailItem.Subject = subject
-			parser.MailItem.DateSent = date
-			parser.MailItem.XMailer = "MailSlurper!"
-			parser.MailItem.ContentType = contentType
-			parser.MailItem.Boundary = boundary
+			if len(strings.TrimSpace(body.HTMLBody)) <= 0 {
+				parser.MailItem.Body = body.TextBody
+			} else {
+				parser.MailItem.Body = body.HTMLBody
+			}
+
+			parser.MailItem.Subject = headers.Subject
+			parser.MailItem.DateSent = headers.Date
+			parser.MailItem.XMailer = headers.XMailer
+			parser.MailItem.ContentType = headers.ContentType
+			parser.MailItem.Boundary = headers.Boundary
+			parser.MailItem.Attachments = body.Attachments
 		}
 
 		return result
@@ -250,18 +249,15 @@ This function will return the following items.
 
 	1. True/false for success
 	2. Error or success message
-	3. Mail date sent header
-	4. Mail subject header
-	5. Mail message body
-	6. Content type
-	7. Boundary marker for multipart messages
+	3. Headers
+	4. Body breakdown
 */
-func (parser *Parser) Process_DATA(line string) (bool, string, string, string, string, string, string) {
+func (parser *Parser) Process_DATA(line string) (bool, string, *MailHeader, *MailBody) {
 	var dataBuffer bytes.Buffer
 
 	commandCheck := strings.Index(strings.ToLower(line), "data")
 	if commandCheck < 0 {
-		return false, "Invalid command", "", "", "", "", ""
+		return false, "Invalid command", nil, nil
 	}
 
 	parser.SendResponse("354 End data with <CR><LF>.<CR><LF>")
@@ -279,26 +275,24 @@ func (parser *Parser) Process_DATA(line string) (bool, string, string, string, s
 		}
 	}
 
-	/*
-	 * Split the DATA content by CRLF CRLF. The first item will be the data
-	 * headers. Everything past that is body/message.
-	 */
-	headerBodySplit := strings.Split(dataBuffer.String(), "\r\n\r\n")
-	if len(headerBodySplit) < 2 {
-		panic("Expected DATA block to contain a header section and a body section")
-	}
+	entireMailContents := dataBuffer.String()
 
 	/*
 	 * Parse the header content
 	 */
 	parser.State = STATE_DATA_HEADER
-	headerData := parseDataHeader(headerBodySplit[0])
-	body := strings.Join(headerBodySplit[1:], "\r\n\r\n")
+	header := &MailHeader{}
+	header.Parse(entireMailContents)
 
-	fmt.Printf("Body: %s\n\n", body)
+	/*
+	 * Parse the body
+	 */
+	parser.State = STATE_BODY
+	body := &MailBody{}
+	body.Parse(entireMailContents, header.Boundary)
 
 	parser.SendOkResponse()
-	return true, "Success", headerData["date"], headerData["subject"], body, headerData["contentType"], headerData["boundary"]
+	return true, "Success", header, body
 }
 
 /*
@@ -347,7 +341,7 @@ func (parser *Parser) Run() {
 	var commandRouterResult bool
 
 	parser.SendResponse("220 Welcome to MailSlurper!")
-	fmt.Println("Reading data from client connection...")
+	log.Println("Reading data from client connection...")
 
 	/*
 	 * Initialize the recipient list to handle up to 20 items to start.
@@ -367,13 +361,13 @@ func (parser *Parser) Run() {
 
 		if command == QUIT {
 			parser.State = STATE_QUIT
-			fmt.Println("Closing connection.")
+			log.Println("Closing connection.")
 		} else {
 			commandRouterResult = parser.CommandRouter(command, raw)
 
 			if commandRouterResult != true {
 				parser.State = STATE_ERROR
-				fmt.Println("Error occured executing command ", command)
+				log.Println("Error occured executing command ", command)
 			}
 		}
 
@@ -420,76 +414,4 @@ func (parser *Parser) SendResponse(resp string) (bool, string) {
 	}
 
 	return result, response
-}
-
-/*
-Takes a string block and parses header items. Returns a map of
-those parsed headers, where the key is the header name and the
-value is the header value.
-*/
-func parseDataHeader(headerLines string) map[string]string {
-	splitHeader := strings.Split(headerLines, "\r\n")
-	numLines := len(splitHeader)
-
-	result := make(map[string]string, numLines)
-
-	result["xmailer"] = "MailSlurper!"
-	result["date"] = ""
-	result["subject"] = ""
-	result["contentType"] = ""
-	result["boundary"] = ""
-
-	for index := 0; index < numLines; index++ {
-		splitHeaderItem := strings.Split(splitHeader[index], ":")
-
-		if strings.ToLower(splitHeaderItem[0]) == "date" {
-			result["date"] = parseDateTime(strings.TrimSpace(strings.Join(splitHeaderItem[1:], ":")))
-			fmt.Println("Date: ", result["date"])
-		}
-
-		if strings.ToLower(splitHeaderItem[0]) == "subject" {
-			result["subject"] = strings.TrimSpace(strings.Join(splitHeaderItem[1:], ""))
-			fmt.Println("Subject: ", result["subject"])
-		}
-
-		if strings.ToLower(splitHeaderItem[0]) == "content-type" {
-			result["contentType"] = strings.TrimSpace(strings.Join(splitHeaderItem[1:], ""))
-			fmt.Println("Content Type: ", result["contentType"])
-		}
-
-		if strings.Contains(strings.ToLower(splitHeaderItem[0]), "boundary") {
-			subsplit := strings.Split(splitHeaderItem[0], "=")
-			result["boundary"] = strings.Replace(strings.Join(subsplit[1:], "="), "\"", "", -1)
-			fmt.Println("Boundary: ", result["boundary"])
-		}
-	}
-
-	return result
-}
-
-/*
-Takes a date/time string and attempts to parse it and return a newly formatted
-date/time that looks like YYYY-MM-DD HH:MM:SS
-*/
-func parseDateTime(dateString string) string {
-	outputForm := "2006-01-02 15:04:05"
-	firstForm := "Mon, 02 Jan 2006 15:04:05 -0700 MST"
-	secondForm := "Mon, 02 Jan 2006 15:04:05 -0700 (MST)"
-
-	result := ""
-
-	t, err := time.Parse(firstForm, dateString)
-	if err != nil {
-		t, err = time.Parse(secondForm, dateString)
-		if err != nil {
-			fmt.Printf("Error parsing date: %s\n", err)
-			result = dateString
-		} else {
-			result = t.Format(outputForm)
-		}
-	} else {
-		result = t.Format(outputForm)
-	}
-
-	return result
 }

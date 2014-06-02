@@ -2,12 +2,12 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-package websockets
+package smtp
 
 import (
 	"net/http"
 
-	"github.com/adampresley/mailslurper/data"
+	"github.com/adampresley/mailslurper/admin/model"
 	"github.com/gorilla/websocket"
 )
 
@@ -17,7 +17,7 @@ type WebsocketConnection struct {
 	WS *websocket.Conn
 
 	// Buffered channel for outbound messages
-	SendChannel chan data.MailItemStruct
+	SendChannel chan MailItemStruct
 }
 
 var WebsocketConnections map[*WebsocketConnection]bool = make(map[*WebsocketConnection]bool)
@@ -25,7 +25,7 @@ var WebsocketConnections map[*WebsocketConnection]bool = make(map[*WebsocketConn
 /*
 This function takes a MailItemStruct and sends it to all open websockets.
 */
-func BroadcastMessageToWebsockets(message data.MailItemStruct) {
+func BroadcastMessageToWebsockets(message MailItemStruct) {
 	for connection := range WebsocketConnections {
 		connection.SendChannel <- message
 	}
@@ -49,13 +49,25 @@ func WebsocketHandler(writer http.ResponseWriter, request *http.Request) {
 	 * Create a new websocket connection struct and add it's pointer
 	 * address to our web socket tracking map.
 	 */
-	connection := &WebsocketConnection{WS: ws, SendChannel: make(chan data.MailItemStruct, 256)}
+	connection := &WebsocketConnection{WS: ws, SendChannel: make(chan MailItemStruct, 256)}
 	WebsocketConnections[connection] = true
 	defer destroyConnection(connection)
 
 	for {
 		for message := range connection.SendChannel {
-			err := connection.WS.WriteJSON(message)
+			transformedMessage := model.JSONMailItem{
+				Id: message.Id,
+				DateSent: message.DateSent,
+				FromAddress: message.FromAddress,
+				ToAddresses: message.ToAddresses,
+				Subject: message.Subject,
+				XMailer: message.XMailer,
+				Body: "",
+				ContentType: "",
+				AttachmentCount: len(message.Attachments),
+			}
+
+			err := connection.WS.WriteJSON(transformedMessage)
 			if err != nil {
 				break
 			}

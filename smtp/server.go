@@ -6,10 +6,8 @@ package smtp
 
 import (
 	"fmt"
+	"log"
 	"net"
-
-	"github.com/adampresley/mailslurper/admin/websockets"
-	"github.com/adampresley/mailslurper/data"
 )
 
 // Represents an SMTP server with an address and connection handle.
@@ -29,7 +27,7 @@ func (s *Server) Connect() {
 	}
 
 	s.ConnectionHandle = handle
-	fmt.Println("SMTP listener setup at ", s.Address)
+	log.Println("SMTP listener setup at ", s.Address)
 }
 
 /*
@@ -60,8 +58,8 @@ func (s *Server) ProcessRequests() {
 	 * Setup a channel for communicating writing mail items to our
 	 * data storage. Start listening for write requests.
 	 */
-	dbWriteChannel := make(chan data.MailItemStruct, 100)
-	go data.Storage.StartWriteListener(dbWriteChannel)
+	dbWriteChannel := make(chan MailItemStruct, 100)
+	go Storage.StartWriteListener(dbWriteChannel)
 
 	/*
 	 * Now start accepting connections for SMTP
@@ -72,15 +70,14 @@ func (s *Server) ProcessRequests() {
 			panic("Error while accepting SMTP requests")
 		}
 
-		go func(c net.Conn, dbWriter chan data.MailItemStruct) {
-			fmt.Println("Processing SMTP request...")
+		go func(c net.Conn, dbWriter chan MailItemStruct) {
 			defer c.Close()
 
 			/*
 			 * Create a package that starts processing SMTP commands
 			 * unil it is time to close the connection
 			 */
-			mailItem := data.MailItemStruct{}
+			mailItem := MailItemStruct{}
 
 			parser := Parser{
 				State:      STATE_START,
@@ -91,11 +88,10 @@ func (s *Server) ProcessRequests() {
 			parser.Run()
 
 			if parser.State == STATE_QUIT {
-				fmt.Println("Writing mail item to database and websocket...")
+				log.Println("Writing mail item to database and websocket...")
 				dbWriter <- parser.MailItem
-				websockets.BroadcastMessageToWebsockets(parser.MailItem)
 			} else {
-				fmt.Println("An error occurred during mail transmission and data will not be written.")
+				log.Println("An error occurred during mail transmission and data will not be written.")
 			}
 		}(connection, dbWriteChannel)
 	}

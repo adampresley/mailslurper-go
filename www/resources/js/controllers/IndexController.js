@@ -128,7 +128,8 @@ require(
 					mailView: "",
 					subject: "",
 					dateSent: "",
-					fromAddress: ""
+					fromAddress: "",
+					attachments: []
 				}
 			}),
 
@@ -160,7 +161,7 @@ require(
 			 */
 			clearMailView = function() {
 				$("#mailItemsTable tr").removeClass("highlight-row");
-				setMailView("", "", "", "");
+				setMailView("", "", "", "", []);
 			},
 
 			/**
@@ -183,11 +184,12 @@ require(
 			/**
 			 * Updates Ractive with mail data to update the mail view DOM
 			 */
-			setMailView = function(subject, dateSent, fromAddress, body) {
+			setMailView = function(subject, dateSent, fromAddress, body, attachments) {
 				mailViewRactive.set("subject", subject);
 				mailViewRactive.set("dateSent", ((dateSent.length > 0) ? MailService.formatMailDate(dateSent) : ""));
 				mailViewRactive.set("fromAddress", fromAddress);
 				mailViewRactive.set("mailView", body);
+				mailViewRactive.set("attachments", attachments)
 			},
 
 			/**
@@ -207,10 +209,16 @@ require(
 
 		mailListRactive.on({
 			viewMailItem: function(e) {
-				setMailView(e.context.subject, e.context.dateSent, e.context.fromAddress, e.context.body);
+				Blocker.block("Loading...", "#mailView");
 
-				$(".mailrow").removeClass("highlight-row");
-				$(e.node).addClass("highlight-row");
+				MailService.getMailItem(e.context.id).done(function(data) {
+					setMailView(data.subject, data.dateSent, data.fromAddress, data.body, data.attachments);
+
+					$(".mailrow").removeClass("highlight-row");
+					$(e.node).addClass("highlight-row");
+
+					Blocker.unblock("#mailView");
+				});
 			},
 
 			sort: function(e, column) {
@@ -221,6 +229,12 @@ require(
 				}
 
 				this.set("sortColumn", column);
+			}
+		});
+
+		mailViewRactive.on({
+			openAttachment: function(e) {
+				window.open("/attachment?id=" + e.context.id, "attachmentView");
 			}
 		});
 
