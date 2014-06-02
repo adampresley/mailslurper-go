@@ -1,24 +1,26 @@
+// Copyright 2013-2014 Adam Presley. All rights reserved
+// Use of this source code is governed by the MIT license
+// that can be found in the LICENSE file.
+
 package smtp
 
 import (
-	"fmt"
+	"log"
 	"regexp"
 	"strings"
 	"time"
 )
 
 type AttachmentHeader struct {
-	Contents                string
-	Boundary                string
 	ContentType             string
 	MIMEVersion             string
 	ContentTransferEncoding string
 	ContentDisposition      string
 	FileName                string
+	Body                    string
 }
 
 type MailHeader struct {
-	Contents    string
 	ContentType string
 	Boundary    string
 	MIMEVersion string
@@ -28,8 +30,9 @@ type MailHeader struct {
 }
 
 /*
-Parses a set of mail headers. Splits lines up and figures out what
-header data goes into what structure key. Most headers follow this format:
+Given an entire mail transmission this method parses a set of mail headers.
+It will split lines up and figures out what header data goes into what
+structure key. Most headers follow this format:
 
 Header-Name: Some value here\r\n
 
@@ -39,19 +42,30 @@ Then it can look like this:
 
 Content-Type: multipart/mixed; boundary="==abcsdfdfd=="\r\n
 */
-func (this *MailHeader) Parse() {
+func (this *MailHeader) Parse(contents string) {
 	var key string
 
 	this.XMailer = "MailSlurper!"
 	this.Boundary = ""
 
 	/*
+	 * Split the DATA content by CRLF CRLF. The first item will be the data
+	 * headers. Everything past that is body/message.
+	 */
+	headerBodySplit := strings.Split(contents, "\r\n\r\n")
+	if len(headerBodySplit) < 2 {
+		panic("Expected DATA block to contain a header section and a body section")
+	}
+
+	contents = headerBodySplit[0]
+
+	/*
 	 * Unfold and split the header into lines. Loop over each line
 	 * and figure out what headers are present. Store them.
 	 * Sadly some headers require special processing.
 	 */
-	this.Contents = unfoldHeaders(this.Contents)
-	splitHeader := strings.Split(this.Contents, "\r\n")
+	contents = unfoldHeaders(contents)
+	splitHeader := strings.Split(contents, "\r\n")
 	numLines := len(splitHeader)
 
 	for index := 0; index < numLines; index++ {
@@ -64,7 +78,6 @@ func (this *MailHeader) Parse() {
 			contentTypeSplit := strings.Split(contentType, ";")
 
 			this.ContentType = strings.TrimSpace(contentTypeSplit[0])
-			fmt.Println("Content-Type: ", this.ContentType)
 
 			/*
 			 * Check to see if we have a boundary marker
@@ -75,21 +88,17 @@ func (this *MailHeader) Parse() {
 				if strings.Contains(strings.ToLower(contentTypeRightSide), "boundary") {
 					boundarySplit := strings.Split(contentTypeRightSide, "=")
 					this.Boundary = strings.Replace(strings.Join(boundarySplit[1:], "="), "\"", "", -1)
-					fmt.Println("Boundary: ", this.Boundary)
 				}
 			}
 
 		case "date":
 			this.Date = parseDateTime(strings.Join(splitItem[1:], ":"))
-			fmt.Println("Date: ", this.Date)
 
 		case "mime-version":
 			this.MIMEVersion = strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			fmt.Println("MIME-Version: ", this.MIMEVersion)
 
 		case "subject":
 			this.Subject = strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			fmt.Println("Subject: ", this.Subject)
 		}
 	}
 }
@@ -100,16 +109,30 @@ header data goes into what structure key. Most headers follow this format:
 
 Header-Name: Some value here\r\n
 */
-func (this *AttachmentHeader) Parse() {
+func (this *AttachmentHeader) Parse(contents string) {
 	var key string
 
+	headerBodySplit := strings.Split(contents, "\r\n\r\n")
+	if len(headerBodySplit) < 2 {
+		panic("Expected attachment to contain a header section and a body section")
+	}
+
+	contents = headerBodySplit[0]
+
+	this.Body = strings.Join(headerBodySplit[1:], "\r\n\r\n")
+	this.FileName = ""
+	this.ContentType = ""
+	this.ContentDisposition = ""
+	this.ContentTransferEncoding = ""
+	this.MIMEVersion = ""
+
 	/*
-	 * Unfodl and split the header into lines. Loop over each line
+	 * Unfold and split the header into lines. Loop over each line
 	 * and figure out what headers are present. Store them.
 	 * Sadly some headers require special processing.
 	 */
-	this.Contents = unfoldHeaders(this.Contents)
-	splitHeader := strings.Split(this.Contents, "\r\n")
+	contents = unfoldHeaders(contents)
+	splitHeader := strings.Split(contents, "\r\n")
 	numLines := len(splitHeader)
 
 	for index := 0; index < numLines; index++ {
@@ -133,23 +156,17 @@ func (this *AttachmentHeader) Parse() {
 				if strings.ToLower(this.ContentDisposition) == "attachment" {
 					filenameSplit := strings.Split(contentDispositionRightSide, "=")
 					this.FileName = strings.Replace(strings.Join(filenameSplit[1:], "="), "\"", "", -1)
-					fmt.Println("Attachment File Name: ", this.FileName)
 				}
 			}
 
-			fmt.Println("Content-Disposition: ", this.ContentDisposition)
-
 		case "content-transfer-encoding":
 			this.ContentTransferEncoding = strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			fmt.Println("Content-Transfer-Encoding: ", this.ContentTransferEncoding)
 
 		case "content-type":
 			this.ContentType = strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			fmt.Println("Content-Type: ", this.ContentType)
 
 		case "mime-version":
 			this.MIMEVersion = strings.TrimSpace(strings.Join(splitItem[1:], ""))
-			fmt.Println("MIME-Version: ", this.MIMEVersion)
 		}
 	}
 }
@@ -170,7 +187,7 @@ func parseDateTime(dateString string) string {
 	if err != nil {
 		t, err = time.Parse(secondForm, dateString)
 		if err != nil {
-			fmt.Printf("Error parsing date: %s\n", err)
+			log.Printf("Error parsing date: %s\n", err)
 			result = dateString
 		} else {
 			result = t.Format(outputForm)

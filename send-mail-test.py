@@ -31,7 +31,11 @@ def getQuote():
 		}
 
 if __name__ == "__main__":
-	numMails = 1
+	sendMultipartMails = True
+	sendTextOnlyMails = True
+	sendAttachmentMails = True
+
+	numMails = 10
 	address = "127.0.0.1"
 	smtpPort = 8000
 
@@ -42,43 +46,73 @@ if __name__ == "__main__":
 		#
 		# Send text+html emails
 		#
-		for index in range(numMails):
-			quote = getQuote()
+		if sendMultipartMails:
+			for index in range(numMails):
+				quote = getQuote()
 
-			textBody = "Hello,\nHere is today's quote.\n\n{0}\n  -- {1}\n\nSincerely,\nAdam Presley".format(quote["quote"], quote["source"])
-			htmlBody = "<p>Hello,</p><p>Here is today's quote.</p><p><em>{0}</em><br />&nbsp;&nbsp;-- {1}</p><p>Sincerely,<br />Adam Presley</p>".format(quote["quote"], quote["source"],)
+				textBody = "Hello,\nHere is today's quote.\n\n{0}\n  -- {1}\n\nSincerely,\nAdam Presley".format(quote["quote"], quote["source"])
+				htmlBody = "<p>Hello,</p><p>Here is today's quote.</p><p><em>{0}</em><br />&nbsp;&nbsp;-- {1}</p><p>Sincerely,<br />Adam Presley</p>".format(quote["quote"], quote["source"],)
 
-			text = MIMEText(textBody, "plain")
-			html = MIMEText(htmlBody, "html")
+				text = MIMEText(textBody, "plain")
+				html = MIMEText(htmlBody, "html")
 
-			msg = MIMEMultipart("alternative")
+				msg = MIMEMultipart("alternative")
 
-			msg["Subject"] = "Quote From {0}".format(quote["source"])
-			msg["From"] = me
-			msg["To"] = to
-			msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0000 UTC")
+				msg["Subject"] = "Quote From {0}".format(quote["source"])
+				msg["From"] = me
+				msg["To"] = to
+				msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0000 UTC")
 
-			msg.attach(text)
-			msg.attach(html)
+				msg.attach(text)
+				msg.attach(html)
 
-			server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
-			server.sendmail(me, [to], msg.as_string())
-			server.quit()
+				server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
+				server.sendmail(me, [to], msg.as_string())
+				server.quit()
 
-			time.sleep(2)
+				time.sleep(2)
 
 		#
 		# Send plain text emails
 		#
-		for index in range(numMails):
-			textBody = "Hello,\nI am plain text mail #{0}.\n\nSincerely,\nAdam Presley".format(index,)
+		if sendTextOnlyMails:
+			for index in range(numMails):
+				textBody = "Hello,\nI am plain text mail #{0}.\n\nSincerely,\nAdam Presley".format(index,)
 
-			msg = MIMEText(textBody)
+				msg = MIMEText(textBody)
 
-			msg["Subject"] = "Text Mail #{0}".format(index,)
+				msg["Subject"] = "Text Mail #{0}".format(index,)
+				msg["From"] = me
+				msg["To"] = to
+				msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S -0700 (UTC)")
+
+				server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
+				server.sendmail(me, [to], msg.as_string())
+				server.quit()
+
+				time.sleep(1)
+
+		#
+		# Send text+attachment
+		#
+		if sendAttachmentMails:
+			textBody = "Hello,\nI am plain text mail with an attachment.\n\nSincerely,\nAdam Presley"
+
+			msg = MIMEMultipart()
+
+			msg["Subject"] = "Text+Attachment Mail"
 			msg["From"] = me
 			msg["To"] = to
 			msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S -0700 (UTC)")
+
+			msg.attach(MIMEText(textBody))
+
+			part = MIMEBase("multipart", "mixed")
+			part.set_payload(open("./screenshot.png", "rb").read())
+			Encoders.encode_base64(part)
+			part.add_header("Content-Type", "image/png")
+			part.add_header("Content-Disposition", "attachment; filename=\"screenshot.png\"")
+			msg.attach(part)
 
 			server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
 			server.sendmail(me, [to], msg.as_string())
@@ -86,58 +120,33 @@ if __name__ == "__main__":
 
 			time.sleep(1)
 
-		#
-		# Send text+attachment
-		#
-		textBody = "Hello,\nI am plain text mail with an attachment.\n\nSincerely,\nAdam Presley"
+			#
+			# Send html+attachment
+			#
+			htmlBody = "<p>This is a <strong>HTML</strong> email with an attachment.</p>"
 
-		msg = MIMEMultipart()
+			msg = MIMEMultipart()
+			html = MIMEText(htmlBody, "html")
 
-		msg["Subject"] = "Text+Attachment Mail"
-		msg["From"] = me
-		msg["To"] = to
-		msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S -0700 (UTC)")
+			msg["Subject"] = "HTML+Attachment Mail"
+			msg["From"] = me
+			msg["To"] = to
+			msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S -0700 (UTC)")
 
-		msg.attach(MIMEText(textBody))
+			msg.attach(html)
 
-		part = MIMEBase("multipart", "mixed")
-		part.set_payload(open("./screenshot.png", "rb").read())
-		Encoders.encode_base64(part)
-		part.add_header("Content-Disposition", "attachment; filename=\"screenshot.png\"")
-		msg.attach(part)
+			part = MIMEBase("multipart", "mixed")
+			part.set_payload(open("./screenshot.png", "rb").read())
+			Encoders.encode_base64(part)
+			part.add_header("Content-Type", "image/png")
+			part.add_header("Content-Disposition", "attachment; filename=\"screenshot.png\"")
+			msg.attach(part)
 
-		server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
-		server.sendmail(me, [to], msg.as_string())
-		server.quit()
+			server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
+			server.sendmail(me, [to], msg.as_string())
+			server.quit()
 
-		time.sleep(1)
-
-		#
-		# Send html+attachment
-		#
-		htmlBody = "This is a HTML email with an attachment."
-
-		msg = MIMEMultipart()
-		html = MIMEText(htmlBody, "html")
-
-		msg["Subject"] = "HTML+Attachment Mail"
-		msg["From"] = me
-		msg["To"] = to
-		msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S -0700 (UTC)")
-
-		msg.attach(html)
-
-		part = MIMEBase("multipart", "mixed")
-		part.set_payload(open("./screenshot.png", "rb").read())
-		Encoders.encode_base64(part)
-		part.add_header("Content-Disposition", "attachment; filename=\"screenshot.png\"")
-		msg.attach(part)
-
-		server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
-		server.sendmail(me, [to], msg.as_string())
-		server.quit()
-
-		#time.sleep(1)
+			#time.sleep(1)
 
 
 	except Exception as e:

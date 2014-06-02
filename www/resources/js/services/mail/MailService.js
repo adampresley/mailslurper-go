@@ -67,7 +67,8 @@ define(
 				},
 
 				parseMailItem: function(mailItem) {
-					mailItem.body = service.parseMailBody(mailItem.contentType, mailItem.boundary, mailItem.body);
+					//mailItem.body = service.parseMailBody(mailItem.contentType, mailItem.boundary, mailItem.body);
+					mailItem.attachmentIcon = (mailItem.attachmentCount > 0) ? "<span class=\"glyphicon glyphicon-paperclip\"></span>" : "&nbsp;";
 					return mailItem;
 				}
 			};

@@ -6,12 +6,12 @@ package smtp
 
 import (
 	"bytes"
-	"fmt"
+	"log"
 	"net"
 	"strings"
 	"time"
 
-	"github.com/adampresley/mailslurper/data"
+//	"github.com/adampresley/mailslurper/data"
 )
 
 // Constants representing the commands that an SMTP client will
@@ -70,7 +70,7 @@ var Commands = map[string]int{
 type Parser struct {
 	State      int
 	Connection net.Conn
-	MailItem   data.MailItemStruct
+	MailItem   MailItemStruct
 }
 
 /*
@@ -82,25 +82,21 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 	var result bool
 	var response string
 
-	var date string
-	var subject string
-	var body string
-	var contentType string
-	var boundary string
+	var headers *MailHeader
+	var body *MailBody
 
 	switch command {
 	case HELO:
 		result, response = parser.Process_HELO(strings.TrimSpace(input))
-		fmt.Println(response)
 		return result
 
 	case MAIL:
 		result, response = parser.Process_MAIL(strings.TrimSpace(input))
 		if result == false {
-			fmt.Println("An error occurred processing the MAIL FROM command: ", response)
+			log.Println("An error occurred processing the MAIL FROM command: ", response)
 		} else {
 			parser.MailItem.FromAddress = response
-			fmt.Println("Mail from: ", parser.MailItem.FromAddress)
+			log.Println("Mail from: ", parser.MailItem.FromAddress)
 		}
 
 		return result
@@ -108,25 +104,30 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 	case RCPT:
 		result, response = parser.Process_RCPT(strings.TrimSpace(input))
 		if result == false {
-			fmt.Println("An error occurred process the RCPT TO command: ", response)
+			log.Println("An error occurred process the RCPT TO command: ", response)
 		} else {
 			parser.MailItem.ToAddresses = append(parser.MailItem.ToAddresses, response)
-			fmt.Printf("Mail to: %s\n", response)
 		}
 
 		return result
 
 	case DATA:
-		result, response, date, subject, body, contentType, boundary = parser.Process_DATA(strings.TrimSpace(input))
+		result, response, headers, body = parser.Process_DATA(strings.TrimSpace(input))
 		if result == false {
-			fmt.Println("An error occurred while reading the DATA chunk: ", response)
+			log.Println("An error occurred while reading the DATA chunk: ", response)
 		} else {
-			parser.MailItem.Body = body
-			parser.MailItem.Subject = subject
-			parser.MailItem.DateSent = date
-			parser.MailItem.XMailer = "MailSlurper!"
-			parser.MailItem.ContentType = contentType
-			parser.MailItem.Boundary = boundary
+			if len(strings.TrimSpace(body.HTMLBody)) <= 0 {
+				parser.MailItem.Body = body.TextBody
+			} else {
+				parser.MailItem.Body = body.HTMLBody
+			}
+
+			parser.MailItem.Subject = headers.Subject
+			parser.MailItem.DateSent = headers.Date
+			parser.MailItem.XMailer = headers.XMailer
+			parser.MailItem.ContentType = headers.ContentType
+			parser.MailItem.Boundary = headers.Boundary
+			parser.MailItem.Attachments = body.Attachments
 		}
 
 		return result
@@ -135,16 +136,6 @@ func (parser *Parser) CommandRouter(command int, input string) bool {
 		return true
 	}
 }
-
-/*
-Takes the raw body contents parsed from mail contents and returns
-the message body and, if there are any attachments, an array of
-Attachment structures. The body will either be pure text content, or
-if HTML is attached then that will be returned.
-func (parser *Parser) ParseBody(contents string) (string, []data.Attachment) {
-
-}
-*/
 
 /*
 Takes a string and returns the integer command representation. For example
@@ -260,18 +251,15 @@ This function will return the following items.
 
 	1. True/false for success
 	2. Error or success message
-	3. Mail date sent header
-	4. Mail subject header
-	5. Mail message body
-	6. Content type
-	7. Boundary marker for multipart messages
+	3. Headers
+	4. Body breakdown
 */
-func (parser *Parser) Process_DATA(line string) (bool, string, string, string, string, string, string) {
+func (parser *Parser) Process_DATA(line string) (bool, string, *MailHeader, *MailBody) {
 	var dataBuffer bytes.Buffer
 
 	commandCheck := strings.Index(strings.ToLower(line), "data")
 	if commandCheck < 0 {
-		return false, "Invalid command", "", "", "", "", ""
+		return false, "Invalid command", nil, nil
 	}
 
 	parser.SendResponse("354 End data with <CR><LF>.<CR><LF>")
@@ -289,34 +277,24 @@ func (parser *Parser) Process_DATA(line string) (bool, string, string, string, s
 		}
 	}
 
-	fmt.Printf("\n**INCOMING BUFFER:**\n %s\n**END INCOMING BUFFER**\n\n", dataBuffer.String())
-
-	/*
-	 * Split the DATA content by CRLF CRLF. The first item will be the data
-	 * headers. Everything past that is body/message.
-	 */
-	headerBodySplit := strings.Split(dataBuffer.String(), "\r\n\r\n")
-	if len(headerBodySplit) < 2 {
-		panic("Expected DATA block to contain a header section and a body section")
-	}
+	entireMailContents := dataBuffer.String()
 
 	/*
 	 * Parse the header content
 	 */
 	parser.State = STATE_DATA_HEADER
+	header := &MailHeader{}
+	header.Parse(entireMailContents)
 
-	header := &MailHeader{
-		Contents:         headerBodySplit[0],
-	}
-
-	header.Parse()
-
-	//body := parseBody(strings.Join(headerBodySplit[1:], "\r\n\r\n"))
+	/*
+	 * Parse the body
+	 */
 	parser.State = STATE_BODY
-	body := strings.Join(headerBodySplit[1:], "\r\n\r\n")
+	body := &MailBody{}
+	body.Parse(entireMailContents, header.Boundary)
 
 	parser.SendOkResponse()
-	return true, "Success", header.Date, header.Subject, body, header.ContentType, header.Boundary
+	return true, "Success", header, body
 }
 
 /*
@@ -365,7 +343,7 @@ func (parser *Parser) Run() {
 	var commandRouterResult bool
 
 	parser.SendResponse("220 Welcome to MailSlurper!")
-	fmt.Println("Reading data from client connection...")
+	log.Println("Reading data from client connection...")
 
 	/*
 	 * Initialize the recipient list to handle up to 20 items to start.
@@ -385,13 +363,13 @@ func (parser *Parser) Run() {
 
 		if command == QUIT {
 			parser.State = STATE_QUIT
-			fmt.Println("Closing connection.")
+			log.Println("Closing connection.")
 		} else {
 			commandRouterResult = parser.CommandRouter(command, raw)
 
 			if commandRouterResult != true {
 				parser.State = STATE_ERROR
-				fmt.Println("Error occured executing command ", command)
+				log.Println("Error occured executing command ", command)
 			}
 		}
 
@@ -438,88 +416,4 @@ func (parser *Parser) SendResponse(resp string) (bool, string) {
 	}
 
 	return result, response
-}
-
-/*
-Returns a filename from a Content-Disposition header of type "attachment".
-*/
-func getFileNameFromContentDisposition(contentDisposition string) (string, error) {
-	dispositionSplit := strings.Split(contentDisposition, ";")
-
-	if len(dispositionSplit) < 2 {
-		return "", fmt.Errorf("Content-Disposition does not contain an attachment file name")
-	}
-
-	if strings.TrimSpace(dispositionSplit[0]) != "attachment" {
-		return "", fmt.Errorf("Content-Disposition does not contain an attachment file name")
-	}
-
-	/*
-	 * The second part of the split should look like 'filename="somefilename.jpg"'
-	 */
-	filenameSplit := strings.Split(strings.Join(dispositionSplit[1:], ";"), "=")
-
-	if len(filenameSplit) < 2 || strings.TrimSpace(strings.ToLower(filenameSplit[0])) != "filename" {
-		return "", fmt.Errorf("Content-Disposition is specified as 'attachment' but does not contain a file name")
-	}
-
-	return strings.TrimSpace(strings.Join(filenameSplit[1:], "=")), nil
-}
-
-/*
-Takes a single header line that consists of a key/value pair
-separated by a colon and return the key and value.
-*/
-func parseHeaderItem(headerLine string) (string, string) {
-	s := strings.Split(headerLine, ":")
-	key := ""
-	value := ""
-
-	if len(s) > 0 {
-		key = s[1]
-	}
-
-	if len(s) > 1 && !strings.Contains(key, "date") {
-		value = strings.TrimSpace(strings.Join(s[1:], ""))
-	} else if len(s) > 1 && strings.Contains(key, "date") {
-		value = strings.TrimSpace(strings.Join(s[1:], ":"))
-	}
-
-	return key, value
-}
-
-/*
-Takes a string block and parses header items. This string should
-be the lines preceding the body of an attachment block. Returns a
-map of those parsed headers, where the key is the header name and the
-value is the header value.
-*/
-func parseAttachmentHeader(headerLines string) map[string]string {
-	splitHeader := strings.Split(headerLines, "\r\n")
-	numLines := len(splitHeader)
-
-	result := make(map[string]string, numLines)
-	key := ""
-	value := ""
-
-	fmt.Printf("Parsing attaachment header...\n")
-
-	result["contentType"] = ""
-	result["fileName"] = ""
-
-	for index := 0; index < numLines; index++ {
-		key, value = parseHeaderItem(splitHeader[index])
-
-		switch strings.ToLower(key) {
-		case "content-type":
-			result["contentType"] = value
-			fmt.Printf("Content-Type: %s\n", value)
-
-		case "content-disposition":
-			result["fileName"], _ = getFileNameFromContentDisposition(value)
-			fmt.Printf("File name: %s\n", result["fileName"])
-		}
-	}
-
-	return result
 }

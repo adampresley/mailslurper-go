@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/adampresley/mailslurper/data"
+	"github.com/adampresley/mailslurper/smtp"
 	"github.com/adampresley/mailslurper/settings"
 )
 
@@ -25,7 +25,7 @@ engine for all mail items, sets the content type header to text/json, and
 returns a JSON-serialized array of mail data.
 */
 func GetMailCollection(writer http.ResponseWriter, request *http.Request) {
-	mailItems := data.Storage.GetMails()
+	mailItems := smtp.Storage.GetMails()
 	json, _ := json.Marshal(mailItems)
 	settings.Config.WriteJson(writer, json)
 }
