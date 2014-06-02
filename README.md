@@ -104,6 +104,11 @@ The package documentation is all there.
 Release Notes
 -------------
 
+**2014-06-02**
+* Rewrote the mail header and body parsing routine.
+* Attachments are now parsed correctly, stored, and can be viewed from the interface
+* Body contents are no longer stored with the mail item row. They are retrieved on demain (when clicking on the row)
+
 **2014-05-05**
 * Mails that contain HTML or are multipart text and HTML now display HTML in the viewer
 * Added ability to search the subject and bodies of mails to filter mail list
