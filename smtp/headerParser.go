@@ -78,6 +78,7 @@ func (this *MailHeader) Parse(contents string) {
 			contentTypeSplit := strings.Split(contentType, ";")
 
 			this.ContentType = strings.TrimSpace(contentTypeSplit[0])
+			log.Println("Mail Content-Type: ", this.ContentType)
 
 			/*
 			 * Check to see if we have a boundary marker
@@ -88,17 +89,22 @@ func (this *MailHeader) Parse(contents string) {
 				if strings.Contains(strings.ToLower(contentTypeRightSide), "boundary") {
 					boundarySplit := strings.Split(contentTypeRightSide, "=")
 					this.Boundary = strings.Replace(strings.Join(boundarySplit[1:], "="), "\"", "", -1)
+
+					log.Println("Mail Boundary: ", this.Boundary)
 				}
 			}
 
 		case "date":
 			this.Date = parseDateTime(strings.Join(splitItem[1:], ":"))
+			log.Println("Mail Date: ", this.Date)
 
 		case "mime-version":
 			this.MIMEVersion = strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			log.Println("Mail MIME-Version: ", this.MIMEVersion)
 
 		case "subject":
 			this.Subject = strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			log.Println("Mail Subject: ", this.Subject)
 		}
 	}
 }
@@ -142,6 +148,8 @@ func (this *AttachmentHeader) Parse(contents string) {
 		switch strings.ToLower(key) {
 		case "content-disposition":
 			contentDisposition := strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			log.Println("Attachment Content-Disposition: ", contentDisposition)
+
 			contentDispositionSplit := strings.Split(contentDisposition, ";")
 
 			if len(contentDispositionSplit) < 2 {
@@ -161,9 +169,12 @@ func (this *AttachmentHeader) Parse(contents string) {
 
 		case "content-transfer-encoding":
 			this.ContentTransferEncoding = strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			log.Println("Attachment Content-Transfer-Encoding: ", this.ContentTransferEncoding)
 
 		case "content-type":
 			contentType := strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			log.Println("Attachment Content-Type: ", contentType)
+
 			contentTypeSplit := strings.Split(contentType, ";")
 
 			if len(contentTypeSplit) < 2 {
@@ -183,6 +194,7 @@ func (this *AttachmentHeader) Parse(contents string) {
 
 		case "mime-version":
 			this.MIMEVersion = strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			log.Println("Attachment MIME-Version: ", this.MIMEVersion)
 		}
 	}
 }
