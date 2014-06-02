@@ -10,8 +10,6 @@ import (
 	"net"
 	"strings"
 	"time"
-
-//	"github.com/adampresley/mailslurper/data"
 )
 
 // Constants representing the commands that an SMTP client will

@@ -65,7 +65,9 @@ func main() {
 	requestRouter.HandleFunc("/", controllers.Home).Methods("GET")
 
 	// Mail items
+	requestRouter.HandleFunc("/mail", controllers.GetMailItem).Methods("GET")
 	requestRouter.HandleFunc("/mails", controllers.GetMailCollection).Methods("GET")
+	requestRouter.HandleFunc("/attachment", controllers.DownloadAttachment).Methods("GET")
 
 	// Configuration
 	requestRouter.HandleFunc("/configuration", controllers.Config).Methods("GET")

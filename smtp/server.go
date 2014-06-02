@@ -90,7 +90,6 @@ func (s *Server) ProcessRequests() {
 			if parser.State == STATE_QUIT {
 				log.Println("Writing mail item to database and websocket...")
 				dbWriter <- parser.MailItem
-				BroadcastMessageToWebsockets(parser.MailItem)
 			} else {
 				log.Println("An error occurred during mail transmission and data will not be written.")
 			}

@@ -35,7 +35,7 @@ if __name__ == "__main__":
 	sendTextOnlyMails = True
 	sendAttachmentMails = True
 
-	numMails = 10
+	numMails = 5
 	address = "127.0.0.1"
 	smtpPort = 8000
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 				server.sendmail(me, [to], msg.as_string())
 				server.quit()
 
-				time.sleep(2)
+				#time.sleep(2)
 
 		#
 		# Send plain text emails
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 				server.sendmail(me, [to], msg.as_string())
 				server.quit()
 
-				time.sleep(1)
+				#time.sleep(1)
 
 		#
 		# Send text+attachment
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 			server.sendmail(me, [to], msg.as_string())
 			server.quit()
 
-			time.sleep(1)
+			#time.sleep(1)
 
 			#
 			# Send html+attachment
@@ -139,7 +139,14 @@ if __name__ == "__main__":
 			part.set_payload(open("./screenshot.png", "rb").read())
 			Encoders.encode_base64(part)
 			part.add_header("Content-Type", "image/png")
-			part.add_header("Content-Disposition", "attachment; filename=\"screenshot.png\"")
+			part.add_header("Content-Disposition", "attachment; filename=\"screenshot1.png\"")
+			msg.attach(part)
+
+			part = MIMEBase("multipart", "mixed")
+			part.set_payload(open("./screenshot.png", "rb").read())
+			Encoders.encode_base64(part)
+			part.add_header("Content-Type", "image/png")
+			part.add_header("Content-Disposition", "attachment; filename=\"screenshot2.png\"")
 			msg.attach(part)
 
 			server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))

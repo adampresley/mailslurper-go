@@ -62,8 +62,8 @@ func WebsocketHandler(writer http.ResponseWriter, request *http.Request) {
 				ToAddresses: message.ToAddresses,
 				Subject: message.Subject,
 				XMailer: message.XMailer,
-				Body: message.Body,
-				ContentType: message.ContentType,
+				Body: "",
+				ContentType: "",
 				AttachmentCount: len(message.Attachments),
 			}
 

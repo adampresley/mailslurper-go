@@ -133,6 +133,7 @@ func (ms *MailStorage) StartWriteListener(dbWriteChannel chan MailItemStruct) {
 
 		statement.Close()
 		mailItemId, _ := result.LastInsertId()
+		mailItem.Id = int(mailItemId)
 
 		/*
 		 * Insert attachments
@@ -159,6 +160,8 @@ func (ms *MailStorage) StartWriteListener(dbWriteChannel chan MailItemStruct) {
 
 		transaction.Commit()
 		log.Printf("New mail item written to database.\n\n")
+
+		BroadcastMessageToWebsockets(mailItem)
 	}
 }
 
@@ -170,17 +173,16 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 
 	rows, err := ms.Db.Query(`
 		SELECT
-			  mailitem.dateSent
+			  mailItem.id AS mailItemId
+			, mailitem.dateSent
 			, mailitem.fromAddress
 			, mailitem.toAddressList
 			, mailitem.subject
 			, mailitem.xmailer
-			, mailitem.body
-			, mailitem.contentType
-			, COUNT(attachment.id) AS attachmentCount
+			, attachment.id AS attachmentId
+			, attachment.fileName
 		FROM mailitem
 			LEFT OUTER JOIN attachment ON mailitem.id=attachment.mailItemId
-		GROUP BY mailitem.id
 		ORDER BY mailitem.dateSent DESC
 	`)
 
@@ -190,7 +192,156 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 
 	defer rows.Close()
 
+	currentMailItemId := 0
+	attachments := make([]model.JSONAttachment, 0)
+	newItem := model.JSONMailItem{}
+
 	for rows.Next() {
+		var mailItemId int
+		var dateSent string
+		var fromAddress string
+		var toAddressList string
+		var subject string
+		var xmailer string
+		var attachmentId int
+		var fileName string
+
+		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &attachmentId, &fileName)
+
+		/*
+		 * If this is our first iteration then we haven't looked at a
+		 * current item yet
+		 */
+		if currentMailItemId == 0 {
+			currentMailItemId = mailItemId
+		}
+
+		/*
+		 * There will be multiple records per mail item if there are
+		 * multiple attachments. As such make sure we are getting all
+		 * the IDs first, and the mail item only once.
+		 */
+		if currentMailItemId > 0 && currentMailItemId == mailItemId {
+			if attachmentId > 0 {
+				attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName, })
+			}
+
+			newItem = model.JSONMailItem{
+				Id:              mailItemId,
+				DateSent:        dateSent,
+				FromAddress:     fromAddress,
+				ToAddresses:     strings.Split(toAddressList, "; "),
+				Subject:         subject,
+				XMailer:         xmailer,
+				Body:            "",
+				ContentType:     "",
+				AttachmentCount: 0,
+				Attachments:     nil,
+			}
+		} else {
+			newItem.Attachments = attachments
+			newItem.AttachmentCount = len(attachments)
+
+			result = append(result, newItem)
+			attachments = make([]model.JSONAttachment, 0)
+
+			if attachmentId > 0 {
+				attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName, })
+			}
+
+			newItem = model.JSONMailItem{
+				Id:              mailItemId,
+				DateSent:        dateSent,
+				FromAddress:     fromAddress,
+				ToAddresses:     strings.Split(toAddressList, "; "),
+				Subject:         subject,
+				XMailer:         xmailer,
+				Body:            "",
+				ContentType:     "",
+				AttachmentCount: 0,
+				Attachments:     nil,
+			}
+
+			if currentMailItemId != mailItemId {
+				currentMailItemId = mailItemId
+			}
+
+		}
+	}
+
+	newItem.Attachments = attachments
+	newItem.AttachmentCount = len(attachments)
+	result = append(result, newItem)
+
+	return result
+}
+
+func (ms *MailStorage) GetAttachment(id int) map[string]string {
+	rows, err := ms.Db.Query(`
+		SELECT
+			  fileName TEXT
+			, contentType TEXT
+			, content TEXT
+		FROM attachment
+		WHERE
+			id=?
+	`, id)
+
+	if err != nil {
+		panic("Error running query to get attachment")
+	}
+
+	defer rows.Close()
+
+	result := make(map[string]string)
+
+	for rows.Next() {
+		var fileName string
+		var contentType string
+		var content string
+
+		rows.Scan(&fileName, &contentType, &content)
+
+		result["fileName"] = fileName
+		result["contentType"] = contentType
+		result["content"] = content
+	}
+
+	return result
+}
+
+/*
+Retrieves a single mail item and its attachments.
+*/
+func (ms *MailStorage) GetMail(id int) model.JSONMailItem {
+	rows, err := ms.Db.Query(`
+		SELECT
+			  mailItem.id AS mailItemId
+			, mailitem.dateSent
+			, mailitem.fromAddress
+			, mailitem.toAddressList
+			, mailitem.subject
+			, mailitem.xmailer
+			, mailitem.body
+			, mailitem.contentType
+			, attachment.id AS attachmentId
+			, attachment.fileName
+		FROM mailitem
+			LEFT OUTER JOIN attachment ON mailitem.id=attachment.mailItemId
+		WHERE mailItem.id=?
+	`, id)
+
+	if err != nil {
+		panic("Error running query to get mail item")
+	}
+
+	defer rows.Close()
+
+	result := model.JSONMailItem{}
+	attachments := make([]model.JSONAttachment, 0)
+
+	for rows.Next() {
+		var mailItemId int
 		var dateSent string
 		var fromAddress string
 		var toAddressList string
@@ -198,11 +349,17 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 		var xmailer string
 		var body string
 		var contentType string
-		var attachmentCount int
+		var attachmentId int
+		var fileName string
 
-		rows.Scan(&dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &attachmentCount)
+		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &attachmentId, &fileName)
 
-		newItem := model.JSONMailItem{
+		if attachmentId > 0 {
+			attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName })
+		}
+
+		result = model.JSONMailItem{
+			Id:              mailItemId,
 			DateSent:        dateSent,
 			FromAddress:     fromAddress,
 			ToAddresses:     strings.Split(toAddressList, "; "),
@@ -210,10 +367,9 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 			XMailer:         xmailer,
 			Body:            body,
 			ContentType:     contentType,
-			AttachmentCount: attachmentCount,
+			AttachmentCount: len(attachments),
+			Attachments:     attachments,
 		}
-
-		result = append(result, newItem)
 	}
 
 	return result
