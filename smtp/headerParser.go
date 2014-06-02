@@ -163,7 +163,23 @@ func (this *AttachmentHeader) Parse(contents string) {
 			this.ContentTransferEncoding = strings.TrimSpace(strings.Join(splitItem[1:], ""))
 
 		case "content-type":
-			this.ContentType = strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			contentType := strings.TrimSpace(strings.Join(splitItem[1:], ""))
+			contentTypeSplit := strings.Split(contentType, ";")
+
+			if len(contentTypeSplit) < 2 {
+				this.ContentType = contentType
+			} else {
+				this.ContentType = strings.TrimSpace(contentTypeSplit[0])
+				contentTypeRightSide := strings.TrimSpace(strings.Join(contentTypeSplit[1:], ";"))
+
+				/*
+				 * See if there is a "name" portion to this
+				 */
+				if strings.Contains(strings.ToLower(contentTypeRightSide), "name") || strings.Contains(strings.ToLower(contentTypeRightSide), "filename") {
+					filenameSplit := strings.Split(contentTypeRightSide, "=")
+					this.FileName = strings.Replace(strings.Join(filenameSplit[1:], "="), "\"", "", -1)
+				}
+			}
 
 		case "mime-version":
 			this.MIMEVersion = strings.TrimSpace(strings.Join(splitItem[1:], ""))
@@ -179,6 +195,7 @@ func parseDateTime(dateString string) string {
 	outputForm := "2006-01-02 15:04:05"
 	firstForm := "Mon, 02 Jan 2006 15:04:05 -0700 MST"
 	secondForm := "Mon, 02 Jan 2006 15:04:05 -0700 (MST)"
+	thirdForm := "Mon, 2 Jan 2006 15:04:05 -0700 (MST)"
 
 	dateString = strings.TrimSpace(dateString)
 	result := ""
@@ -187,8 +204,13 @@ func parseDateTime(dateString string) string {
 	if err != nil {
 		t, err = time.Parse(secondForm, dateString)
 		if err != nil {
-			log.Printf("Error parsing date: %s\n", err)
-			result = dateString
+			t, err = time.Parse(thirdForm, dateString)
+			if err != nil {
+				log.Printf("Error parsing date: %s\n", err)
+				result = dateString
+			} else {
+				result = t.Format(outputForm)
+			}
 		} else {
 			result = t.Format(outputForm)
 		}
