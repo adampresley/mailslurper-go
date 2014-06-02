@@ -21,7 +21,7 @@ define(
 				if (el === undefined) {
 					$.blockUI(config);
 				} else {
-					$(el).blockUI(config);
+					$(el).block(config);
 				}
 			},
 
@@ -31,12 +31,20 @@ define(
 			 */
 			unblock: function(el, fn) {
 				if (el === undefined) {
-					$.unblockUI({ onUnblock: fn });
+					if (fn === undefined) {
+						$.unblockUI();
+					} else {
+						$.unblockUI({ onUnblock: fn });
+					}
 				} else {
 					if (typeof el === "function") {
 						$.unblockUI({ onUnblock: el });
 					} else {
-						$(el).unblockUI({ onUnblock: fn });
+						if (fn === undefined) {
+							$(el).unblock();
+						} else {
+							$(el).unblock({ onUnblock: fn });
+						}
 					}
 				}
 			}
