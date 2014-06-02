@@ -57,7 +57,7 @@ html, body {
 .mail-view { padding: 10px; }
 .mailrow { cursor: default; }
 #searchNav { margin-left: 25px; }
-
+.attachmentLink { cursor: default; }
 .credit {
 	position: relative;
 	top: 15px;
