@@ -174,8 +174,6 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 		log.Panic("Error running query to get mail items: ", err)
 	}
 
-	defer rows.Close()
-
 	currentMailItemId := 0
 	attachments := make([]model.JSONAttachment, 0)
 	newItem := model.JSONMailItem{}
@@ -259,6 +257,7 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 	newItem.AttachmentCount = len(attachments)
 	result = append(result, newItem)
 
+	rows.Close()
 	return result
 }
 
