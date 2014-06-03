@@ -32,7 +32,7 @@ func CreateMSSQLDatabase(db *sql.DB) error {
 	var err error
 
 	sql := `
-		IF OBJECT_ID('mailitem', 'U') IS NOT NULL BEGIN
+		IF OBJECT_ID('mailitem', 'U') IS NULL BEGIN
 			CREATE TABLE mailitem (
 				id INT NOT NULL PRIMARY KEY IDENTITY(1,1),
 				dateSent DATETIME,
@@ -53,7 +53,7 @@ func CreateMSSQLDatabase(db *sql.DB) error {
 	}
 
 	sql = `
-		IF OBJECT_ID('attachment', 'U') IS NOT NULL BEGIN
+		IF OBJECT_ID('attachment', 'U') IS NULL BEGIN
 			CREATE TABLE attachment (
 				id INT NOT NULL PRIMARY KEY IDENTITY(1,1),
 				mailItemId INT,
