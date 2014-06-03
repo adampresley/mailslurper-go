@@ -108,6 +108,7 @@ Release Notes
 * Rewrote the mail header and body parsing routine.
 * Attachments are now parsed correctly, stored, and can be viewed from the interface
 * Body contents are no longer stored with the mail item row. They are retrieved on demain (when clicking on the row)
+* Added a favicon
 
 **2014-05-05**
 * Mails that contain HTML or are multipart text and HTML now display HTML in the viewer
@@ -152,6 +153,9 @@ Mailslurper makes use of many libraries and tools. They are copyright of their r
 * Google Go - Copyright 2012 The Go Authors
 * go-sqlite3 - Copyright 2012-2014 Yasuhiro Matsumoto
 * Gorilla Web Toolkit - Copyright 2012 Rodrigo Moraes
+* MailSlurper logo uses:
+	* Go gopher - Created by and copyright Renee French
+	* Mail icon copyright David Hopkins, http://semlabs.co.uk
 
 License
 -------
