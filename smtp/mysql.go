@@ -8,6 +8,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -22,6 +24,16 @@ func ConnectMySQL(host string, port string, database string, userName string, pa
 	if err != nil {
 		return nil, err
 	}
+
+	temp := os.Getenv("max_connections")
+	if temp == "" {
+		temp = "151"
+	}
+
+	maxConnections, _ := strconv.Atoi(temp)
+
+	db.SetMaxIdleConns(maxConnections)
+	db.SetMaxOpenConns(maxConnections)
 
 	return db, nil
 }
