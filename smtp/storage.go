@@ -16,6 +16,7 @@ import (
 const (
 	ENGINE_SQLITE int = 1
 	ENGINE_MYSQL  int = 2
+	ENGINE_MSSQL  int = 3
 )
 
 /*
@@ -50,8 +51,12 @@ func (ms *MailStorage) Connect() error {
 		err = CreateSqlliteDatabase(db)
 
 	case ENGINE_MYSQL:
-		db, err = ConnectMySQL("localhost", "3306", "mailslurper", "root", "password")
+		db, err = ConnectMySQL(ms.Host, ms.Port, ms.Database, ms.UserName, ms.Password)
 		err = CreateMySQLDatabase(db)
+
+	case ENGINE_MSSQL:
+		db, err = ConnectMSSQL(ms.Host, ms.Port, ms.Database, ms.UserName, ms.Password)
+		err = CreateMSSQLDatabase(db)
 	}
 
 	if err != nil {

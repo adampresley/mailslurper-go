@@ -103,6 +103,14 @@ func setupGlobalDatabaseConnection() {
 		database = settings.Config.DBDatabase
 		userName = settings.Config.DBUserName
 		password = settings.Config.DBPassword
+
+	case "mssql":
+		engine = smtp.ENGINE_MSSQL
+		host = settings.Config.DBHost
+		port = settings.Config.DBPort
+		database = settings.Config.DBDatabase
+		userName = settings.Config.DBUserName
+		password = settings.Config.DBPassword
 	}
 
 	smtp.Storage = smtp.MailStorage{
@@ -117,6 +125,6 @@ func setupGlobalDatabaseConnection() {
 	err := smtp.Storage.Connect()
 
 	if err != nil {
-		panic("Unable to connect to database")
+		log.Panic("Unable to connect to database: ", err)
 	}
 }
