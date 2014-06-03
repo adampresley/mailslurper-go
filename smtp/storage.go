@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/adampresley/mailslurper/admin/model"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
