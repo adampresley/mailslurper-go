@@ -172,7 +172,6 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 
 	if err != nil {
 		log.Panic("Error running query to get mail items: ", err)
-		//panic("Error running query to get mail items")
 	}
 
 	defer rows.Close()
