@@ -34,7 +34,7 @@ func CreateMSSQLDatabase(db *sql.DB) error {
 	sql := `
 		IF OBJECT_ID('mailitem', 'U') IS NOT NULL BEGIN
 			CREATE TABLE mailitem (
-				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+				id INT NOT NULL PRIMARY KEY IDENTITY(1,1),
 				dateSent DATETIME,
 				fromAddress VARCHAR(255),
 				toAddressList TEXT,
@@ -55,7 +55,7 @@ func CreateMSSQLDatabase(db *sql.DB) error {
 	sql = `
 		IF OBJECT_ID('attachment', 'U') IS NOT NULL BEGIN
 			CREATE TABLE attachment (
-				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+				id INT NOT NULL PRIMARY KEY IDENTITY(1,1),
 				mailItemId INT,
 				fileName VARCHAR(255),
 				contentType VARCHAR(50),
