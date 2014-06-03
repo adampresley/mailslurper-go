@@ -8,18 +8,22 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/adampresley/mailslurper/admin/model"
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const (
+	ENGINE_SQLITE int = 1
+)
+
 /*
 Structure for holding a persistent database connection.
 */
 type MailStorage struct {
-	Db *sql.DB
+	Engine int
+	Db     *sql.DB
 }
 
 // Global variable for our server's database connection
@@ -30,56 +34,21 @@ Open a connection to a SQLite database. This will attempt to delete any
 existing database file and create a new one with a blank table for holding
 mail data.
 */
-func (ms *MailStorage) Connect(filename string) error {
-	os.Remove(filename)
+func (ms *MailStorage) Connect() error {
+	var db *sql.DB
+	var err error
 
-	/*
-	 * Create the connection
-	 */
-	db, err := sql.Open("sqlite3", filename)
+	switch ms.Engine {
+	case ENGINE_SQLITE:
+		db, err = ConnectSqlite()
+		err = CreateSqlliteDatabase(db)
+	}
+
 	if err != nil {
 		return err
 	}
 
 	ms.Db = db
-
-	/*
-	 * Create the mailitem table.
-	 */
-	sql := `
-		CREATE TABLE mailitem (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			dateSent TEXT,
-			fromAddress TEXT,
-			toAddressList TEXT,
-			subject TEXT,
-			xmailer TEXT,
-			body TEXT,
-			contentType TEXT,
-			boundary TEXT
-		);
-	`
-
-	_, err = ms.Db.Exec(sql)
-	if err != nil {
-		return err
-	}
-
-	sql = `
-		CREATE TABLE attachment (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			mailItemId INTEGER,
-			fileName TEXT,
-			contentType TEXT,
-			content TEXT
-		);
-	`
-
-	_, err = ms.Db.Exec(sql)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
