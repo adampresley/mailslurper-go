@@ -161,7 +161,7 @@ func (this *AttachmentHeader) Parse(contents string) {
 				/*
 				 * See if we have an attachment and filename
 				 */
-				if strings.Contains(strings.ToLower(contentDispositionRightSide), "attachment") {
+				if strings.Contains(strings.ToLower(this.ContentDisposition), "attachment") {
 					filenameSplit := strings.Split(contentDispositionRightSide, "=")
 					this.FileName = strings.Replace(strings.Join(filenameSplit[1:], "="), "\"", "", -1)
 				}
