@@ -22,8 +22,14 @@ const (
 Structure for holding a persistent database connection.
 */
 type MailStorage struct {
-	Engine int
-	Db     *sql.DB
+	Engine   int
+	Host     string
+	Port     string
+	Database string
+	UserName string
+	Password string
+
+	Db       *sql.DB
 }
 
 // Global variable for our server's database connection

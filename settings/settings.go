@@ -18,6 +18,12 @@ var flagWWW = flag.String("www", "", "Path to the web administrator directory.")
 var flagWWWPort = flag.Int("wwwport", 0, "Port number to bind to for WWW administrator.")
 var flagSmtpAddress = flag.String("smtpaddress", "", "Address to bind the SMTP server to.")
 var flagSmtpPort = flag.Int("smtpport", 0, "Port number to bind to for SMTP server.")
+var flagDBEngine = flag.String("dbengine", "", "Database engine for storage: sqlite, mysql, mssql")
+var flagDBHost = flag.String("dbhost", "", "Host name of database server (does not apply to sqlite)")
+var flagDBPort = flag.String("dbport", "", "Port number database server runs on (does not apply to sqlite)")
+var flagDBDatabase = flag.String("dbdatabase", "", "Name of database for storage (does not apply to sqlite)")
+var flagDBUserName = flag.String("dbusername", "", "User name authorized to connect to database (does not apply to sqlite)")
+var flagDBPassword = flag.String("dbpassword", "", "Password of user authorized to connect to database (does not apply to sqlite)")
 
 type Configuration struct {
 	Header      string
@@ -27,6 +33,12 @@ type Configuration struct {
 	WWWPort     float64 `json:"wwwPort"`
 	SmtpAddress string  `json:"smtpAddress"`
 	SmtpPort    float64 `json:"smtpPort"`
+	DBEngine    string  `json:"dbEngine"`
+	DBHost      string  `json:"dbHost"`
+	DBPort      string  `json:"dbPort"`
+	DBDatabase  string  `json:"dbDatabase"`
+	DBUserName  string  `json:"dbUserName"`
+	DBPassword  string  `json:"dbPassword"`
 }
 
 var Config Configuration
@@ -59,6 +71,30 @@ func (c *Configuration) LoadFlags() {
 
 	if *flagSmtpPort != 0 {
 		c.SmtpPort = float64(*flagSmtpPort)
+	}
+
+	if *flagDBEngine != "" {
+		c.DBEngine = *flagDBEngine
+	}
+
+	if *flagDBHost != "" {
+		c.DBHost = *flagDBHost
+	}
+
+	if *flagDBPort != "" {
+		c.DBPort = *flagDBPort
+	}
+
+	if *flagDBDatabase != "" {
+		c.DBDatabase = *flagDBDatabase
+	}
+
+	if *flagDBUserName != "" {
+		c.DBUserName = *flagDBUserName
+	}
+
+	if *flagDBPassword != "" {
+		c.DBPassword = *flagDBPassword
 	}
 }
 

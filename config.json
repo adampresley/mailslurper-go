@@ -1,1 +1,1 @@
-{"smtpAddress":"0.0.0.0","smtpPort":8000,"www":"www/","wwwPort":8080}
+{"smtpAddress":"0.0.0.0","smtpPort":8000,"www":"www/","wwwPort":8080,"dbEngine":"sqlite","dbHost":"","dbPort":"","dbDatabase":"","dbUserName":"","dbPassword":""}
