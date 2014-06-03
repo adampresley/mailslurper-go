@@ -180,16 +180,16 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 	attachments := make([]model.JSONAttachment, 0)
 	newItem := model.JSONMailItem{}
 
-	for rows.Next() {
-		var mailItemId int
-		var dateSent string
-		var fromAddress string
-		var toAddressList string
-		var subject string
-		var xmailer string
-		var attachmentId int
-		var fileName string
+	var mailItemId int
+	var dateSent string
+	var fromAddress string
+	var toAddressList string
+	var subject string
+	var xmailer string
+	var attachmentId int
+	var fileName string
 
+	for rows.Next() {
 		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &attachmentId, &fileName)
 
 		/*
