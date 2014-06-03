@@ -157,6 +157,12 @@ func (c *Configuration) SaveSettings(configFile string) error {
 	config["wwwPort"] = c.WWWPort
 	config["smtpAddress"] = c.SmtpAddress
 	config["smtpPort"] = c.SmtpPort
+	config["dbEngine"] = c.DBEngine
+	config["dbHost"] = c.DBHost
+	config["dbPort"] = c.DBPort
+	config["dbDatabase"] = c.DBDatabase
+	config["dbUserName"] = c.DBUserName
+	config["dbPassword"] = c.DBPassword
 
 	json, err := json.Marshal(config)
 	if err != nil {

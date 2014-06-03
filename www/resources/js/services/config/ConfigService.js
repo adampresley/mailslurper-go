@@ -29,12 +29,18 @@ define(
 				return Http.get(endpoint);
 			},
 
-			save: function(www, wwwPort, smtpAddress, smtpPort) {
+			save: function(www, wwwPort, smtpAddress, smtpPort, dbEngine, dbHost, dbPort, dbDatabase, dbUserName, dbPassword) {
 				return Http.put(endpoint, {
 					www: www,
 					wwwPort: wwwPort,
 					smtpAddress: smtpAddress,
-					smtpPort: smtpPort
+					smtpPort: smtpPort,
+					dbEngine: dbEngine,
+					dbHost: dbHost,
+					dbPort: dbPort,
+					dbDatabase: dbDatabase,
+					dbUserName: dbUserName,
+					dbPassword: dbPassword
 				});
 			}
 		};
