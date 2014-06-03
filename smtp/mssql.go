@@ -35,7 +35,7 @@ func CreateMSSQLDatabase(db *sql.DB) error {
 		IF OBJECT_ID('mailitem', 'U') IS NULL BEGIN
 			CREATE TABLE mailitem (
 				id INT NOT NULL PRIMARY KEY IDENTITY(1,1),
-				dateSent DATETIME,
+				dateSent VARCHAR(25),
 				fromAddress VARCHAR(255),
 				toAddressList TEXT,
 				subject VARCHAR(512),
