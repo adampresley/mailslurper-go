@@ -15,6 +15,7 @@ import (
 
 const (
 	ENGINE_SQLITE int = 1
+	ENGINE_MYSQL  int = 2
 )
 
 /*
@@ -41,6 +42,10 @@ func (ms *MailStorage) Connect() error {
 	case ENGINE_SQLITE:
 		db, err = ConnectSqlite()
 		err = CreateSqlliteDatabase(db)
+
+	case ENGINE_MYSQL:
+		db, err = ConnectMySQL("localhost", "3306", "mailslurper", "root", "password")
+		err = CreateMySQLDatabase(db)
 	}
 
 	if err != nil {
@@ -141,7 +146,7 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 
 	rows, err := ms.Db.Query(`
 		SELECT
-			  mailItem.id AS mailItemId
+			  mailitem.id AS mailItemId
 			, mailitem.dateSent
 			, mailitem.fromAddress
 			, mailitem.toAddressList
@@ -155,7 +160,8 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 	`)
 
 	if err != nil {
-		panic("Error running query to get mail items")
+		log.Panic("Error running query to get mail items: ", err)
+		//panic("Error running query to get mail items")
 	}
 
 	defer rows.Close()
@@ -284,7 +290,7 @@ Retrieves a single mail item and its attachments.
 func (ms *MailStorage) GetMail(id int) model.JSONMailItem {
 	rows, err := ms.Db.Query(`
 		SELECT
-			  mailItem.id AS mailItemId
+			  mailitem.id AS mailItemId
 			, mailitem.dateSent
 			, mailitem.fromAddress
 			, mailitem.toAddressList
@@ -296,11 +302,11 @@ func (ms *MailStorage) GetMail(id int) model.JSONMailItem {
 			, attachment.fileName
 		FROM mailitem
 			LEFT OUTER JOIN attachment ON mailitem.id=attachment.mailItemId
-		WHERE mailItem.id=?
+		WHERE mailitem.id=?
 	`, id)
 
 	if err != nil {
-		panic("Error running query to get mail item")
+		log.Panic("Error running query to get mail item: ", err)
 	}
 
 	defer rows.Close()
