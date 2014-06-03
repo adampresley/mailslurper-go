@@ -226,6 +226,8 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 			newItem.Attachments = attachments
 			newItem.AttachmentCount = len(attachments)
 
+			log.Printf("Retrieving mail item %d from %s with a subject of %s", mailItemId, fromAddress, subject)
+
 			result = append(result, newItem)
 			attachments = make([]model.JSONAttachment, 0)
 
