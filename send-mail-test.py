@@ -155,6 +155,33 @@ if __name__ == "__main__":
 
 			#time.sleep(1)
 
+			#
+			# Send html+attachment with filename in content-type as "name"
+			#
+			htmlBody = "<p>This is a <strong>HTML</strong> email with an attachment done differently.</p>"
+
+			msg = MIMEMultipart()
+			html = MIMEText(htmlBody, "html")
+
+			msg["Subject"] = "HTML+Attachment Mail 2"
+			msg["From"] = me
+			msg["To"] = to
+			msg["Date"] = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S -0700 (UTC)")
+
+			msg.attach(html)
+
+			part = MIMEBase("multipart", "mixed")
+			part.set_payload(open("./screenshot.png", "rb").read())
+			Encoders.encode_base64(part)
+			part.add_header("Content-Type", "image/png; name=screenshot1.png")
+			part.add_header("Content-Disposition", "attachment;")
+			msg.attach(part)
+
+			server = smtplib.SMTP("{0}:{1}".format(address, smtpPort))
+			server.sendmail(me, [to], msg.as_string())
+			server.quit()
+
+
 
 	except Exception as e:
 		print("An error occurred while trying to connect and send the email: {0}".format(e.message))
