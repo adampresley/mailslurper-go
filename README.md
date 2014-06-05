@@ -10,34 +10,59 @@ to the address *http://localhost:8080* (note that this port can be changed too).
 
 Requirements (to build)
 -----------------------
-* Google Go (http://golang.org/)
+* Google Go 1.2 (http://golang.org/)
 
-Requirements (to run)
+How To Run MailSluper
 ---------------------
-* An operating system (Windows, Mac OS X, Linux, FreeBSD)
+Make sure you have the following:
+
+* An operating system (Windows, Linux, FreeBSD)
 * A modern browser (Chrome, Firefox)
+
+Then download the latest release of MailSlurper. You can find releases at
+https://github.com/adampresley/mailslurper-go/releases. Extract the contents
+of the ZIP file to any location you like and then run the executable.
+
+**Windows**
+* Open Explorer to where you extracted this contents of the ZIP file
+* Double-click on *mailslurper.exe*. This will open the console window
+* Open your favorite browser and browse to **http://localhost:8080**
+
+**Ubuntu**
+* Open a terminal
+* Change directory to where you extract the ZIP file
+   * *cd /path/to/mailslurper*
+* Execute the program
+   * *./mailslurper*
+* Open your favorite browser and browse to **http://localhost:8080**
 
 How to Build
 ------------
-Assuming you have Go installed on your system and your GOPATH environment
-variable setup, place this source code, the whole **mailslurper** folder,
-in *$GOPATH/src/github.com/adampresley*.
+If you are more adventurous and wish to compile this yourself then this
+section is for you. Assuming you have Go installed on your system and
+your GOPATH environment variable setup, place this source code, the whole **mailslurper** folder,
+in *$GOPATH/src/github.com/adampresley*. Please note that the name of the folder must be
+**mailslurper**. Not **mailslurper-go** or anything else. For more information on setting up
+Google Go visit http://golang.org/doc/install.
 
 Once you've done this open up a terminal and execute the following:
 
 ```bash
+$ go get
 $ go install github.com/adampresley/mailslurper
 ```
 
-Executing the above will create an executable for your OS/platform
-into the *$GOPATH/bin* folder. Here you may want to create a folder
-somewhere easily accessible. Copy the following items to this new folder.
+Executing the above will download and compile any dependencies and create
+an executable for your OS/platform into the *$GOPATH/bin* folder. Here
+you may want to create a folder somewhere easily accessible. Copy the
+following items to this new folder.
 
 * *$GOPATH/bin/mailslurper* (mailslurper.exe on Windows)
 * *$GOPATH/src/github.com/adampresley/mailslurper/www*
+* *$GOPATH/src/github.com/adampresley/mailslurper/config.json*
 
-How to Run
-----------
+Additional Information
+----------------------
 From a terminal:
 
 * Windows: mailslurper.exe
@@ -73,7 +98,13 @@ settings. It looks like this.
 	"www": "www/",
 	"wwwPort": 8080,
 	"smtpAddress": "127.0.0.1",
-	"smtpPort": 8000
+	"smtpPort": 8000,
+	"dbEngine": "sqlite",
+	"dbHost": "",
+	"dbPort": "",
+	"dbDatabase": "",
+	"dbUserName": "",
+	"dbPassword": ""
 }
 ```
 
@@ -81,6 +112,12 @@ settings. It looks like this.
 * **wwwPort** - Port number to bind to for the web-based administrator.
 * **smtpAddress** - Address to bind the SMTP server to.
 * **smtpPort** - Port number to bind to for the SMTP server.
+* **dbEngine** - Storage engine to use. Options are *sqlite*, *mysql*, or *mssql*
+* **dbHost** - Server address for your database. Only applies to *mysql* and *mssql*
+* **dbPort** - Port your database runs on. Only applies to *mysql* and *mssql*
+* **dbDatabase** - Database name to store mail in. Only applies to *mysql* and *mssql*
+* **dbUserName** - User name to connect to your database with. Only applies to *mysql* and *mssql*
+* **dbPassword** - Password to connect to your database with. Only applies to *mysql* and *mssql*
 
 Please note that these provide MailSlurper the settings it needs to run and the file
 must be configured properly for the application to function. Also note that if you
