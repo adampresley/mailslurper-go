@@ -44,3 +44,4 @@ layout: default
 **2013-12-04**
 * Initial conversion of the Groovy+Grails version of MailSlurper to Google Go. It is still pretty rough, but the mechanics are there
 
+[Back](index.html)
