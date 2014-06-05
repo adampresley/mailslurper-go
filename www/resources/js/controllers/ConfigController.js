@@ -28,7 +28,13 @@ require(
 						www: "www/",
 						wwwPort: 8080,
 						smtpAddress: "0.0.0.0",
-						smtpPort: 8000
+						smtpPort: 8000,
+						dbEngine: "sqlite",
+						dbHost: "",
+						dbPort: "",
+						dbDatabase: "",
+						dbUserName: "",
+						dbPassword: ""
 					}
 				},
 
@@ -47,8 +53,9 @@ require(
 		ractive.on({
 			save: function(e) {
 				var data = e.context;
+				data.dbEngine = $("#dbEngine").val();
 
-				ConfigService.save(data.www, data.wwwPort, data.smtpAddress, data.smtpPort)
+				ConfigService.save(data.www, data.wwwPort, data.smtpAddress, data.smtpPort, data.dbEngine, data.dbHost, data.dbPort, data.dbDatabase, data.dbUserName, data.dbPassword)
 					.done(function() {
 						Modal.information({
 							message: "Your settings have been saved. <strong>Please note that you must restart MailSlurper for these changes to take effect!</strong>",
@@ -69,6 +76,7 @@ require(
 		ConfigService.get()
 			.done(function(data) {
 				ractive.set("config", data, function() {
+					$("#dbEngine").val(data.dbEngine);
 					Blocker.unblock(function() { $("#www").focus(); });
 				});
 			})

@@ -15,8 +15,8 @@ type Attachment struct {
 }
 
 type MailBody struct {
-	TextBody string
-	HTMLBody string
+	TextBody    string
+	HTMLBody    string
 	Attachments []*Attachment
 }
 

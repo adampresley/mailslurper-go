@@ -5,7 +5,7 @@
 package model
 
 type JSONAttachment struct {
-	Id       int `json:"id"`
+	Id       int    `json:"id"`
 	FileName string `json:"fileName"`
 }
 

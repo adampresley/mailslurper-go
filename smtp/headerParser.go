@@ -151,17 +151,17 @@ func (this *AttachmentHeader) Parse(contents string) {
 			log.Println("Attachment Content-Disposition: ", contentDisposition)
 
 			contentDispositionSplit := strings.Split(contentDisposition, ";")
+			contentDispositionRightSide := strings.TrimSpace(strings.Join(contentDispositionSplit[1:], ";"))
 
-			if len(contentDispositionSplit) < 2 {
+			if len(contentDispositionSplit) < 2 || (len(contentDispositionSplit) > 1 && len(strings.TrimSpace(contentDispositionRightSide)) <= 0) {
 				this.ContentDisposition = contentDisposition
 			} else {
 				this.ContentDisposition = strings.TrimSpace(contentDispositionSplit[0])
-				contentDispositionRightSide := strings.TrimSpace(strings.Join(contentDispositionSplit[1:], ";"))
 
 				/*
 				 * See if we have an attachment and filename
 				 */
-				if strings.Contains(strings.ToLower(contentDispositionRightSide), "attachment") {
+				if strings.Contains(strings.ToLower(this.ContentDisposition), "attachment") && len(strings.TrimSpace(contentDispositionRightSide)) > 0 {
 					filenameSplit := strings.Split(contentDispositionRightSide, "=")
 					this.FileName = strings.Replace(strings.Join(filenameSplit[1:], "="), "\"", "", -1)
 				}

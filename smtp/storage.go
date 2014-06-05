@@ -8,17 +8,28 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/adampresley/mailslurper/admin/model"
-	_ "github.com/mattn/go-sqlite3"
+)
+
+const (
+	ENGINE_SQLITE int = 1
+	ENGINE_MYSQL  int = 2
+	ENGINE_MSSQL  int = 3
 )
 
 /*
 Structure for holding a persistent database connection.
 */
 type MailStorage struct {
+	Engine   int
+	Host     string
+	Port     string
+	Database string
+	UserName string
+	Password string
+
 	Db *sql.DB
 }
 
@@ -30,56 +41,29 @@ Open a connection to a SQLite database. This will attempt to delete any
 existing database file and create a new one with a blank table for holding
 mail data.
 */
-func (ms *MailStorage) Connect(filename string) error {
-	os.Remove(filename)
+func (ms *MailStorage) Connect() error {
+	var db *sql.DB
+	var err error
 
-	/*
-	 * Create the connection
-	 */
-	db, err := sql.Open("sqlite3", filename)
+	switch ms.Engine {
+	case ENGINE_SQLITE:
+		db, err = ConnectSqlite()
+		err = CreateSqlliteDatabase(db)
+
+	case ENGINE_MYSQL:
+		db, err = ConnectMySQL(ms.Host, ms.Port, ms.Database, ms.UserName, ms.Password)
+		err = CreateMySQLDatabase(db)
+
+	case ENGINE_MSSQL:
+		db, err = ConnectMSSQL(ms.Host, ms.Port, ms.Database, ms.UserName, ms.Password)
+		err = CreateMSSQLDatabase(db)
+	}
+
 	if err != nil {
 		return err
 	}
 
 	ms.Db = db
-
-	/*
-	 * Create the mailitem table.
-	 */
-	sql := `
-		CREATE TABLE mailitem (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			dateSent TEXT,
-			fromAddress TEXT,
-			toAddressList TEXT,
-			subject TEXT,
-			xmailer TEXT,
-			body TEXT,
-			contentType TEXT,
-			boundary TEXT
-		);
-	`
-
-	_, err = ms.Db.Exec(sql)
-	if err != nil {
-		return err
-	}
-
-	sql = `
-		CREATE TABLE attachment (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			mailItemId INTEGER,
-			fileName TEXT,
-			contentType TEXT,
-			content TEXT
-		);
-	`
-
-	_, err = ms.Db.Exec(sql)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -173,7 +157,7 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 
 	rows, err := ms.Db.Query(`
 		SELECT
-			  mailItem.id AS mailItemId
+			  mailitem.id AS mailItemId
 			, mailitem.dateSent
 			, mailitem.fromAddress
 			, mailitem.toAddressList
@@ -187,10 +171,8 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 	`)
 
 	if err != nil {
-		panic("Error running query to get mail items")
+		log.Panic("Error running query to get mail items: ", err)
 	}
-
-	defer rows.Close()
 
 	currentMailItemId := 0
 	attachments := make([]model.JSONAttachment, 0)
@@ -223,7 +205,7 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 		 */
 		if currentMailItemId > 0 && currentMailItemId == mailItemId {
 			if attachmentId > 0 {
-				attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName, })
+				attachments = append(attachments, model.JSONAttachment{Id: attachmentId, FileName: fileName})
 			}
 
 			newItem = model.JSONMailItem{
@@ -242,11 +224,13 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 			newItem.Attachments = attachments
 			newItem.AttachmentCount = len(attachments)
 
+			log.Printf("Retrieving mail item %d from %s with a subject of %s", mailItemId, fromAddress, subject)
+
 			result = append(result, newItem)
 			attachments = make([]model.JSONAttachment, 0)
 
 			if attachmentId > 0 {
-				attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName, })
+				attachments = append(attachments, model.JSONAttachment{Id: attachmentId, FileName: fileName})
 			}
 
 			newItem = model.JSONMailItem{
@@ -273,6 +257,7 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 	newItem.AttachmentCount = len(attachments)
 	result = append(result, newItem)
 
+	rows.Close()
 	return result
 }
 
@@ -316,7 +301,7 @@ Retrieves a single mail item and its attachments.
 func (ms *MailStorage) GetMail(id int) model.JSONMailItem {
 	rows, err := ms.Db.Query(`
 		SELECT
-			  mailItem.id AS mailItemId
+			  mailitem.id AS mailItemId
 			, mailitem.dateSent
 			, mailitem.fromAddress
 			, mailitem.toAddressList
@@ -328,11 +313,11 @@ func (ms *MailStorage) GetMail(id int) model.JSONMailItem {
 			, attachment.fileName
 		FROM mailitem
 			LEFT OUTER JOIN attachment ON mailitem.id=attachment.mailItemId
-		WHERE mailItem.id=?
+		WHERE mailitem.id=?
 	`, id)
 
 	if err != nil {
-		panic("Error running query to get mail item")
+		log.Panic("Error running query to get mail item: ", err)
 	}
 
 	defer rows.Close()
@@ -355,7 +340,7 @@ func (ms *MailStorage) GetMail(id int) model.JSONMailItem {
 		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &attachmentId, &fileName)
 
 		if attachmentId > 0 {
-			attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName })
+			attachments = append(attachments, model.JSONAttachment{Id: attachmentId, FileName: fileName})
 		}
 
 		result = model.JSONMailItem{

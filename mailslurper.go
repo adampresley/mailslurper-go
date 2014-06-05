@@ -85,10 +85,46 @@ func main() {
 }
 
 func setupGlobalDatabaseConnection() {
-	smtp.Storage = smtp.MailStorage{}
-	err := smtp.Storage.Connect("./mail.db")
+	var engine int
+	var host string
+	var port string
+	var database string
+	var userName string
+	var password string
+
+	switch settings.Config.DBEngine {
+	case "sqlite":
+		engine = smtp.ENGINE_SQLITE
+
+	case "mysql":
+		engine = smtp.ENGINE_MYSQL
+		host = settings.Config.DBHost
+		port = settings.Config.DBPort
+		database = settings.Config.DBDatabase
+		userName = settings.Config.DBUserName
+		password = settings.Config.DBPassword
+
+	case "mssql":
+		engine = smtp.ENGINE_MSSQL
+		host = settings.Config.DBHost
+		port = settings.Config.DBPort
+		database = settings.Config.DBDatabase
+		userName = settings.Config.DBUserName
+		password = settings.Config.DBPassword
+	}
+
+	smtp.Storage = smtp.MailStorage{
+		Engine:   engine,
+		Host:     host,
+		Port:     port,
+		Database: database,
+		UserName: userName,
+		Password: password,
+	}
+
+	err := smtp.Storage.Connect()
 
 	if err != nil {
-		panic("Unable to create database")
+		log.Panic("Unable to connect to database: ", err)
 	}
 }

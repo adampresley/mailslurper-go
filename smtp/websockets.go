@@ -56,14 +56,14 @@ func WebsocketHandler(writer http.ResponseWriter, request *http.Request) {
 	for {
 		for message := range connection.SendChannel {
 			transformedMessage := model.JSONMailItem{
-				Id: message.Id,
-				DateSent: message.DateSent,
-				FromAddress: message.FromAddress,
-				ToAddresses: message.ToAddresses,
-				Subject: message.Subject,
-				XMailer: message.XMailer,
-				Body: "",
-				ContentType: "",
+				Id:              message.Id,
+				DateSent:        message.DateSent,
+				FromAddress:     message.FromAddress,
+				ToAddresses:     message.ToAddresses,
+				Subject:         message.Subject,
+				XMailer:         message.XMailer,
+				Body:            "",
+				ContentType:     "",
 				AttachmentCount: len(message.Attachments),
 			}
 

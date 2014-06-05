@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/adampresley/mailslurper/smtp"
 	"github.com/adampresley/mailslurper/settings"
+	"github.com/adampresley/mailslurper/smtp"
 )
 
 /*
