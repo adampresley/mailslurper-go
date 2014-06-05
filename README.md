@@ -195,6 +195,8 @@ Mailslurper makes use of many libraries and tools. They are copyright of their r
 * Moment.js - Copyright 2011-2014 Tim Wood, Iskren Chernev, Moment.js contributors
 * Google Go - Copyright 2012 The Go Authors
 * go-sqlite3 - Copyright 2012-2014 Yasuhiro Matsumoto
+* go-mssqldb - Copyright 2012 The Go Authors (https://github.com/denisenkom/go-mssqldb)
+* Go-MySQL-Driver - Copyright ? (https://github.com/go-sql-driver/mysql)
 * Gorilla Web Toolkit - Copyright 2012 Rodrigo Moraes
 * MailSlurper logo uses:
 	* Go gopher - Created by and copyright Renee French
