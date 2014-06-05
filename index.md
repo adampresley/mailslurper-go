@@ -26,6 +26,9 @@ up your favorite web browser to http://localhost:8080 and you can view captured 
 * [How To Run MailSlurper](how-to-run.html)
 * [Release Notes](release-notes.html)
 
+![Screenshot](http://www.adampresley.com.s3.amazonaws.com/posts/mailslurper-4.0.png)
+
+
 ### Copyright Information
 MailSlurper is Copyright (c) 2013-2014 Adam Presley. Mailslurper makes use of many libraries and tools.
 They are copyright of their respective owners.
