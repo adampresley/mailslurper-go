@@ -104,6 +104,12 @@ The package documentation is all there.
 Release Notes
 -------------
 
+**2014-06-04**
+* MailSlurper now supports storing mail and attachments in one of three engines:
+   * SQlite
+   * MySQL
+   * Microsoft SQL Server 2008+
+
 **2014-06-02**
 * Rewrote the mail header and body parsing routine.
 * Attachments are now parsed correctly, stored, and can be viewed from the interface
