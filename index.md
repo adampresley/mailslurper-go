@@ -21,26 +21,7 @@ Simply configure your application and/or application server stack to the host an
 MailSlurper on and it will capture emails you send out into a database for later viewing. Then open
 up your favorite web browser to http://localhost:8080 and you can view captured emails and their attachments!
 
-### How To Run MailSluper
-Make sure you have the following:
+#### Contents
 
-* An operating system (Windows, Linux, FreeBSD)
-* A modern browser (Chrome, Firefox)
-
-Then download the latest release of MailSlurper. You can find releases at
-https://github.com/adampresley/mailslurper-go/releases. Extract the contents
-of the ZIP file to any location you like and then run the executable.
-
-**Windows**
-* Open Explorer to where you extracted this contents of the ZIP file
-* Double-click on *mailslurper.exe*. This will open the console window
-* Open your favorite browser and browse to **http://localhost:8080**
-
-**Ubuntu**
-* Open a terminal
-* Change directory to where you extract the ZIP file
-   * *cd /path/to/mailslurper*
-* Execute the program
-   * *./mailslurper*
-* Open your favorite browser and browse to **http://localhost:8080**
+* [How To Run MailSlurper](how-to-run.html)
 
