@@ -4,7 +4,7 @@ layout: default
 ---
 
 <section id="downloads" class="clearfix">
-	<a href="https://github.com/adampresley/mailslurper-go/releases/tag/4.0" id="download-zip" class="button"><span>Get Release 4.0!</span></a>
+	<a href="https://github.com/adampresley/mailslurper-go/releases/tag/4.0" id="download-release" class="button"><span>Get Release 4.0!</span></a>
 	<a href="https://github.com/adampresley/mailslurper-go/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
 	<a href="https://github.com/adampresley/mailslurper-go" id="view-on-github" class="button"><span>View on GitHub</span></a>
 </section>
