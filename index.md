@@ -11,7 +11,7 @@ layout: default
 
 <hr />
 
-### What Is MailSlurper?
+### Welcome to MailSlurper!
 MailSlurper is a simple SMTP server that slurps mail into oblivion! Having MailSlurper installed on your local
 or shared development environment allows you to test sending email without having to go through the trouble
 of configuring a real mail server. You also don't have to worry about emails actually going out to unintended
