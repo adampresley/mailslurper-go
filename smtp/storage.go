@@ -98,8 +98,6 @@ func (ms *MailStorage) StartWriteListener(dbWriteChannel chan MailItemStruct) {
 			panic(fmt.Sprintf("Error preparing insert statement: %s", err))
 		}
 
-		//defer statement.Close()
-
 		result, err := statement.Exec(
 			mailItem.DateSent,
 			mailItem.FromAddress,
