@@ -38,7 +38,7 @@ Example:
 	defer smtp.Close()
 */
 func (s *Server) Close() {
-	s.Close()
+	s.ConnectionHandle.Close()
 }
 
 /*
