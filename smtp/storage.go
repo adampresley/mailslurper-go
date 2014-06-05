@@ -30,7 +30,7 @@ type MailStorage struct {
 	UserName string
 	Password string
 
-	Db       *sql.DB
+	Db *sql.DB
 }
 
 // Global variable for our server's database connection
@@ -205,7 +205,7 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 		 */
 		if currentMailItemId > 0 && currentMailItemId == mailItemId {
 			if attachmentId > 0 {
-				attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName, })
+				attachments = append(attachments, model.JSONAttachment{Id: attachmentId, FileName: fileName})
 			}
 
 			newItem = model.JSONMailItem{
@@ -230,7 +230,7 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 			attachments = make([]model.JSONAttachment, 0)
 
 			if attachmentId > 0 {
-				attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName, })
+				attachments = append(attachments, model.JSONAttachment{Id: attachmentId, FileName: fileName})
 			}
 
 			newItem = model.JSONMailItem{
@@ -340,7 +340,7 @@ func (ms *MailStorage) GetMail(id int) model.JSONMailItem {
 		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &attachmentId, &fileName)
 
 		if attachmentId > 0 {
-			attachments = append(attachments, model.JSONAttachment{ Id: attachmentId, FileName: fileName })
+			attachments = append(attachments, model.JSONAttachment{Id: attachmentId, FileName: fileName})
 		}
 
 		result = model.JSONMailItem{
