@@ -26,3 +26,4 @@ of the ZIP file to any location you like and then run the executable.
    * *./mailslurper*
 * Open your favorite browser and browse to **http://localhost:8080**
 
+[Back](/)
