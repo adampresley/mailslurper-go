@@ -24,6 +24,7 @@ up your favorite web browser to http://localhost:8080 and you can view captured 
 #### Contents
 
 * [How To Run MailSlurper](how-to-run.html)
+* [How To Build and Compile](how-to-build-and-compile.html)
 * [Release Notes](release-notes.html)
 
 ![Screenshot](http://www.adampresley.com.s3.amazonaws.com/posts/mailslurper-4.0.png)
