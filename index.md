@@ -4,46 +4,43 @@ layout: default
 ---
 
 <section id="downloads" class="clearfix">
+	<a href="https://github.com/adampresley/mailslurper-go/releases/tag/4.0" class="button"><span>Download Release 4.0!</span></a>
 	<a href="https://github.com/adampresley/mailslurper-go/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-	<a href="https://github.com/adampresley/mailslurper-go/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
 	<a href="https://github.com/adampresley/mailslurper-go" id="view-on-github" class="button"><span>View on GitHub</span></a>
 </section>
 
 <hr />
 
-### Test Header
-Here we are testing some header content
+### What Is MailSlurper?
+MailSlurper is a simple SMTP server that slurps mail into oblivion! Having MailSlurper installed on your local
+or shared development environment allows you to test sending email without having to go through the trouble
+of configuring a real mail server. You also don't have to worry about emails actually going out to unintended
+recipients.
 
-	<section id="main_content">
-					<h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+Simply configure your application and/or application server stack to the host and port you are running
+MailSlurper on and it will capture emails you send out into a database for later viewing. Then open
+up your favorite web browser to http://localhost:8080 and you can view captured emails and their attachments!
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+### How To Run MailSluper
+Make sure you have the following:
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+* An operating system (Windows, Linux, FreeBSD)
+* A modern browser (Chrome, Firefox)
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+Then download the latest release of MailSlurper. You can find releases at
+https://github.com/adampresley/mailslurper-go/releases. Extract the contents
+of the ZIP file to any location you like and then run the executable.
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+**Windows**
+* Open Explorer to where you extracted this contents of the ZIP file
+* Double-click on *mailslurper.exe*. This will open the console window
+* Open your favorite browser and browse to **http://localhost:8080**
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+**Ubuntu**
+* Open a terminal
+* Change directory to where you extract the ZIP file
+   * *cd /path/to/mailslurper*
+* Execute the program
+   * *./mailslurper*
+* Open your favorite browser and browse to **http://localhost:8080**
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-				</section>
