@@ -67,7 +67,7 @@ func (s *Server) ProcessRequests() {
 	for {
 		connection, err := s.ConnectionHandle.Accept()
 		if err != nil {
-			panic("Error while accepting SMTP requests")
+			log.Panicf("Error while accepting SMTP requests: %s", err)
 		}
 
 		go func(c net.Conn, dbWriter chan MailItemStruct) {
