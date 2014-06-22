@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+
+	"github.com/adampresley/mailslurper/profiling"
 )
 
 // Represents an SMTP server with an address and connection handle.
@@ -85,6 +87,7 @@ func (s *Server) ProcessRequests() {
 				MailItem:   mailItem,
 			}
 
+			profiling.Timer.Step("Parse mail item")
 			parser.Run()
 
 			if parser.State == STATE_QUIT {

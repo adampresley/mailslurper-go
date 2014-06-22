@@ -10,6 +10,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"github.com/adampresley/mailslurper/profiling"
 )
 
 // Constants representing the commands that an SMTP client will
@@ -254,6 +256,8 @@ This function will return the following items.
 */
 func (parser *Parser) Process_DATA(line string) (bool, string, *MailHeader, *MailBody) {
 	var dataBuffer bytes.Buffer
+
+	profiling.Timer.Step("Parsing mail body")
 
 	commandCheck := strings.Index(strings.ToLower(line), "data")
 	if commandCheck < 0 {

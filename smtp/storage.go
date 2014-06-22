@@ -10,6 +10,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/adampresley/mailslurper/profiling"
 	"github.com/adampresley/mailslurper/admin/model"
 )
 
@@ -82,6 +83,8 @@ func (ms *MailStorage) StartWriteListener(dbWriteChannel chan MailItemStruct) {
 	for {
 		mailItem := <-dbWriteChannel
 
+		profiling.Timer.Step("Writing mail item to database")
+
 		/*
 		 * Create a transaction and insert the new mail item
 		 */
@@ -151,6 +154,8 @@ func (ms *MailStorage) StartWriteListener(dbWriteChannel chan MailItemStruct) {
 Retrieves all stored mail items as an array of MailItemStruct items.
 */
 func (ms *MailStorage) GetMails() []model.JSONMailItem {
+	profiling.Timer.Step("Getting mail collection")
+
 	result := make([]model.JSONMailItem, 0)
 
 	rows, err := ms.Db.Query(`
@@ -260,6 +265,8 @@ func (ms *MailStorage) GetMails() []model.JSONMailItem {
 }
 
 func (ms *MailStorage) GetAttachment(id int) map[string]string {
+	profiling.Timer.Step("Getting attachment data")
+
 	rows, err := ms.Db.Query(`
 		SELECT
 			  fileName TEXT
@@ -297,6 +304,8 @@ func (ms *MailStorage) GetAttachment(id int) map[string]string {
 Retrieves a single mail item and its attachments.
 */
 func (ms *MailStorage) GetMail(id int) model.JSONMailItem {
+	profiling.Timer.Step("Get single mail item")
+
 	rows, err := ms.Db.Query(`
 		SELECT
 			  mailitem.id AS mailItemId

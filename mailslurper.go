@@ -5,18 +5,84 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"path/filepath"
+	"runtime"
+//	"runtime/pprof"
 
 	"github.com/adampresley/mailslurper/admin/controllers"
+	"github.com/adampresley/mailslurper/profiling"
 	"github.com/adampresley/mailslurper/settings"
 	"github.com/adampresley/mailslurper/smtp"
 	"github.com/gorilla/mux"
 )
 
+var cpuprofile = flag.String("cpuprofile", "", "Write CPU profile to disk")
+var memprofile = flag.String("memprofile", "", "Write memory profile to disk")
+
 func main() {
+	var err error
+
+	profiling.Initialize()
+	flag.Parse()
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	/*
+	 * Setup command line flags
+	 */
+
+/*
+	if *cpuprofile != "" {
+		cpuFile, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		pprof.StartCPUProfile(cpuFile)
+	}
+*/
+
+	/*
+	 * Prepare SIGINT handler (CTRL+C)
+	 */
+	profiling.Timer.Step("Initializing SIGINT channel")
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt)
+
+	go func() {
+		for _ = range done {
+/*
+			if *cpuprofile != "" {
+				pprof.StopCPUProfile();
+			}
+*/
+
+			log.Println("Shutting down...")
+
+/*
+			if *memprofile != "" {
+				memFile, err := os.Create(*memprofile)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				pprof.WriteHeapProfile(memFile)
+				memFile.Close()
+			}
+*/
+
+			os.Exit(0)
+		}
+	}()
+
+	profiling.Timer.Step("Loading settings")
+
 	settings.Config = settings.Configuration{
 		WWW:         "www/",
 		WWWPort:     8080,
@@ -27,7 +93,7 @@ func main() {
 	settings.Config.LoadHeader("header")
 	settings.Config.LoadFooter("footer")
 
-	err := settings.Config.LoadSettings("config.json")
+	err = settings.Config.LoadSettings("config.json")
 	if err != nil {
 		log.Println("There was an error reading your config.json settings file: ", err)
 		return
@@ -40,12 +106,15 @@ func main() {
 	/*
 	 * Setup global database connection handle
 	 */
+	profiling.Timer.Step("Setup database storage and write-listener")
+
 	setupGlobalDatabaseConnection()
 	defer smtp.Storage.Disconnect()
 
 	/*
 	 * Setup the SMTP listener
 	 */
+	profiling.Timer.Step("Setup SMTP server")
 	smtpServer := smtp.Server{Address: fmt.Sprintf("%s:%d", settings.Config.SmtpAddress, int(settings.Config.SmtpPort))}
 	defer smtpServer.Close()
 
@@ -59,6 +128,7 @@ func main() {
 	/*
 	 * Setup web server for the administrator
 	 */
+	profiling.Timer.Step("Setup HTTP administrator")
 	requestRouter := mux.NewRouter()
 
 	// Home
@@ -80,6 +150,7 @@ func main() {
 	// Static requests
 	requestRouter.PathPrefix("/resources/").Handler(http.StripPrefix("/resources/", http.FileServer(http.Dir(staticPath))))
 
+	profiling.Timer.Step("Serving requests")
 	log.Printf("MailSlurper administrator started on %s (%s)\n\n", settings.Config.GetFullListenAddress(), settings.Config.WWW)
 	http.ListenAndServe(settings.Config.GetFullListenAddress(), requestRouter)
 }
