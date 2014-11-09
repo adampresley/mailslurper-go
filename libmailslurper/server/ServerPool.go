@@ -1,3 +1,7 @@
+// Copyright 2013-3014 Adam Presley. All rights reserved
+// Use of this source code is governed by the MIT license
+// that can be found in the LICENSE file.
+
 package server
 
 import(
@@ -26,7 +30,7 @@ func NewServerPool(maxWorkers int) *ServerPool {
 	return result
 }
 
-func (this *ServerPool) GetAvailableWorker(connection net.Conn, receiver chan *mailitem.MailItem) (*SmtpWorker, error) {
+func (this *ServerPool) GetAvailableWorker(connection net.Conn, receiver chan mailitem.MailItem) (*SmtpWorker, error) {
 	result := &SmtpWorker{}
 
 	for index := 0; index < this.MaxWorkers; index++ {

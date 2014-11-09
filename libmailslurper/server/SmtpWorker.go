@@ -1,3 +1,7 @@
+// Copyright 2013-3014 Adam Presley. All rights reserved
+// Use of this source code is governed by the MIT license
+// that can be found in the LICENSE file.
+
 package server
 
 import (
@@ -17,7 +21,7 @@ type SmtpWorker struct{
 	Connection net.Conn
 	Mail       mailitem.MailItem
 	Reader     smtpio.Reader
-	Receiver   chan *mailitem.MailItem
+	Receiver   chan mailitem.MailItem
 	State      smtpconstants.SmtpWorkerState
 	WorkerId   int
 	Writer     smtpio.Writer
@@ -255,6 +259,8 @@ func (this *SmtpWorker) Work() {
 
 		this.Writer.SayGoodbye()
 		this.Connection.Close()
+
+		this.Receiver <- this.Mail
 	}()
 }
 

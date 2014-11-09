@@ -39,7 +39,7 @@ When a connection is recieved a goroutine is started to create a new MailItemStr
 and parser and the parser process is started. If the parsing is successful
 the MailItemStruct is added to the database writing channel.
 */
-func Dispatcher(serverPool *ServerPool, handle net.Listener, receiver chan *mailitem.MailItem) {
+func Dispatcher(serverPool *ServerPool, handle net.Listener, receiver chan mailitem.MailItem) {
 	/*
 	 * Now start accepting connections for SMTP
 	 */
