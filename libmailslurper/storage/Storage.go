@@ -203,14 +203,18 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 
 func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*attachment.Attachment) error {
 	for _, a := range attachments {
+		attachmentId := GenerateId()
+
 		statement, err = transaction.Prepare(`
 			INSERT INTO attachment (
-				  mailItemId
+				  id
+				, mailItemId
 				, fileName
 				, contentType
 				, content
 			) VALUES (
 				  ?
+				, ?
 				, ?
 				, ?
 				, ?
@@ -222,6 +226,7 @@ func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*att
 		}
 
 		_, err = statement.Exec(
+			attachmentId,
 			mailItemId,
 			a.Headers.FileName,
 			a.Headers.ContentType,
@@ -233,6 +238,7 @@ func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*att
 		}
 
 		statement.Close()
+		a.Id = attachmentId
 	}
 
 	return nil
@@ -252,7 +258,8 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 		 */
 		statement, err := transaction.Prepare(`
 			INSERT INTO mailitem (
-				  dateSent
+				  id
+				, dateSent
 				, fromAddress
 				, toAddressList
 				, subject
@@ -269,6 +276,7 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 				, ?
 				, ?
 				, ?
+				, ?
 			)`
 		)
 
@@ -276,7 +284,10 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 			return 0, fmt.Errorf("Error preparing insert statement for mail item in StoreMail: %s", err)
 		}
 
+		mailItemId := GenerateId()
+
 		result, err := statement.Exec(
+			mailItemId,
 			mailItem.DateSent,
 			mailItem.FromAddress,
 			strings.Join(mailItem.ToAddresses, "; "),
@@ -293,7 +304,6 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 		}
 
 		statement.Close()
-		mailItemId, _ := result.LastInsertId()
 		mailItem.Id = mailItemId
 
 		/*
