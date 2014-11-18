@@ -14,7 +14,7 @@ populated after an incoming client connection has finished
 sending mail data to this server.
 */
 type MailItem struct {
-	Id          int                      `json:"id"`
+	Id          string                   `json:"id"`
 	DateSent    string                   `json:"dateSent"`
 	FromAddress string                   `json:"fromAddress"`
 	ToAddresses []string                 `json:"toAddresses"`
@@ -27,7 +27,7 @@ type MailItem struct {
 }
 
 func NewMailItem(
-	id int,
+	id string,
 	dateSent, fromAddress string,
 	toAddresses []string,
 	subject, xMailer, body, contentType, boundary string,

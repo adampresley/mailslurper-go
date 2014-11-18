@@ -5,7 +5,7 @@
 package attachment
 
 type Attachment struct {
-	Id       int               `json:"id"`
+	Id       string            `json:"id"`
 	Headers  *AttachmentHeader `json:"headers"`
 	Contents string            `json:"contents"`
 }

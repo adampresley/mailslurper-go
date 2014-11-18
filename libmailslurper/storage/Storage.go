@@ -32,7 +32,7 @@ func DisconnectFromStorage() {
 /*
 Returns an attachment by ID
 */
-func GetAttachment(id int) (attachment.Attachment, error) {
+func GetAttachment(id string) (attachment.Attachment, error) {
 	result := attachment.Attachment{}
 
 	rows, err := golangdb.Db["lib"].Query(`
@@ -69,9 +69,9 @@ func GetAttachment(id int) (attachment.Attachment, error) {
 
 /*
 Retrieves all stored mail items as an array of MailItem items.
-Takes an ID as a filter. If ID == 0 then all records are returned.
+Takes an ID as a filter. If ID == "" then all records are returned.
 */
-func GetMails(id int) ([]mailitem.MailItem, error) {
+func GetMails(id string) ([]mailitem.MailItem, error) {
 	result := make([]mailitem.MailItem, 0)
 	attachments := make([]attachment.Attachment, 0)
 
@@ -92,7 +92,7 @@ func GetMails(id int) ([]mailitem.MailItem, error) {
 		WHERE 1=1
 	`
 
-	if id > 0 {
+	if id != "" {
 		sql = sql + " AND mailitem.id=? "
 	}
 
@@ -109,11 +109,11 @@ func GetMails(id int) ([]mailitem.MailItem, error) {
 	 * to the resulting array. There will be multiple mail items
 	 * because of the join to attachments.
 	 */
-	currentMailItemId := 0
+	currentMailItemId := ""
 	newItemCreated := false
 
 	for rows.Next() {
-		var mailItemId int
+		var mailItemId string
 		var dateSent string
 		var fromAddress string
 		var toAddressList string
@@ -128,7 +128,7 @@ func GetMails(id int) ([]mailitem.MailItem, error) {
 		 * If this is our first iteration then we haven't looked at a
 		 * current item yet
 		 */
-		if currentMailItemId == 0 {
+		if currentMailItemId == "" {
 			currentMailItemId = mailItemId
 		}
 
@@ -137,7 +137,7 @@ func GetMails(id int) ([]mailitem.MailItem, error) {
 		 * multiple attachments. As such make sure we are getting all
 		 * the IDs first, and the mail item only once.
 		 */
-		if currentMailItemId > 0 && currentMailItemId == mailItemId {
+		if currentMailItemId != "" && currentMailItemId == mailItemId {
 			if attachmentId > 0 {
 				attachments = append(attachments, attachment.Attachment{Id: attachmentId, Headers: attachment.AttachmentHeader{FileName: fileName}})
 			}
@@ -162,7 +162,7 @@ func GetMails(id int) ([]mailitem.MailItem, error) {
 			result = append(result, newItem)
 			attachments = make([]attachment.Attachment, 0)
 
-			if attachmentId > 0 {
+			if attachmentId != "" {
 				attachments = append(attachments, attachment.Attachment{Id: attachmentId, Headers: attachment.AttachmentHeader{FileName: fileName}})
 			}
 
@@ -191,7 +191,7 @@ func GetMails(id int) ([]mailitem.MailItem, error) {
 	return result
 }
 
-func storeAttachments(transaction *sql.Tx, attachments []*attachment.Attachment) error {
+func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*attachment.Attachment) error {
 	for _, a := range attachments {
 		statement, err = transaction.Prepare(`
 			INSERT INTO attachment (
@@ -228,7 +228,7 @@ func storeAttachments(transaction *sql.Tx, attachments []*attachment.Attachment)
 	return nil
 }
 
-func StoreMail(mailItem *mailitem.MailItem) (int, error) {
+func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 		/*
 		 * Create a transaction and insert the new mail item
 		 */
@@ -284,12 +284,12 @@ func StoreMail(mailItem *mailitem.MailItem) (int, error) {
 
 		statement.Close()
 		mailItemId, _ := result.LastInsertId()
-		mailItem.Id = int(mailItemId)
+		mailItem.Id = mailItemId
 
 		/*
 		 * Insert attachments
 		 */
-		err = storeAttachments(transaction, mailItem.Attachments); err != nil {
+		err = storeAttachments(mailItemId, transaction, mailItem.Attachments); err != nil {
 			transaction.Rollback()
 			return 0, fmt.Errorf("Unable to insert attachments in StoreMail: %s", err)
 		}
