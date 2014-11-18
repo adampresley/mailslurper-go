@@ -5,12 +5,12 @@
 package attachment
 
 type AttachmentHeader struct {
-	ContentType             string
-	MIMEVersion             string
-	ContentTransferEncoding string
-	ContentDisposition      string
-	FileName                string
-	Body                    string
+	ContentType             string `json:"contentType"`
+	MIMEVersion             string `json:"mimeVersion"`
+	ContentTransferEncoding string `json:"contentTransferEncoding"`
+	ContentDisposition      string `json:"contentDisposition"`
+	FileName                string `json:"fileName"`
+	Body                    string `json:"body"`
 }
 
 func NewAttachmentHeader(contentType, mimeVersion, contentTransferEncoding, contentDisposition, fileName, body string) *AttachmentHeader {
