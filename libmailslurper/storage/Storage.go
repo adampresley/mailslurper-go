@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/adampresley/golangdb"
-	"github.com/adampresley/mailslurper/libmailslurper/mode/attachment"
-	"github.com/adampresley/mailslurper/libmailslurper/mode/mailitem"
+	"github.com/adampresley/mailslurper/libmailslurper/model/attachment"
+	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
 
 	"github.com/nu7hatch/gouuid"
 )
