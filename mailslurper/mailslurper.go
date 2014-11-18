@@ -7,7 +7,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,16 +15,15 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/adampresley/mailslurper/mailslurper/middleware"
-	"github.com/adampresley/mailslurper/mailslurper/webserver"
+	"github.com/adampresley/mailslurper/libmailslurper/configuration"
+	"github.com/adampresley/mailslurper/libmailslurper/storage"
+	"github.com/adampresley/mailslurper/mailslurperservice/listener"
+
 	"github.com/adampresley/sigint"
-	"github.com/justinas/alice"
 )
 
 func main() {
 	var err error
-
-	flag.Parse()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	/*
@@ -36,30 +34,39 @@ func main() {
 		os.Exit(0)
 	})
 
-	err = settings.Config.LoadSettings("config.json")
+	/*
+	 * Load configuration
+	 */
+	config, err := configuration.LoadConfigurationFromFile(configuration.CONFIGURATION_FILE_NAME)
 	if err != nil {
-		log.Println("There was an error reading your config.json settings file: ", err)
-		return
+		log.Println("ERROR - There was an error reading your configuration file: ", err)
+		os.Exit(0)
 	}
 
 	/*
 	 * Setup global database connection handle
 	 */
-	setupGlobalDatabaseConnection()
-	defer smtp.Storage.Disconnect()
+	databaseConnection := configuration.GetDatabaseConfiguration()
+	err = storage.ConnectToStorage(databaseConnection)
+	if err != nil {
+		log.Println("ERROR - There was an error connecting to your data storage: ", err)
+		os.Exit(0)
+	}
+
+	defer storage.DisconnectFromStorage()
 
 	/*
 	 * Setup the SMTP listener
-	 */
 	smtpServer := smtp.Server{Address: fmt.Sprintf("%s:%d", settings.Config.SmtpAddress, int(settings.Config.SmtpPort))}
 	defer smtpServer.Close()
+	 */
 
 	/*
 	 * Start up the SMTP server and serve requests
 	 * out of a goroutine.
-	 */
 	smtpServer.Connect()
 	go smtpServer.ProcessRequests()
+	 */
 
 	/*
 	 * Setup web server for the administrator
@@ -92,59 +99,9 @@ func main() {
 */
 
 	/*
-	 * Setup routing and middleware
+	 * Start the services server
 	 */
-	router := webserver.SetupWebRouter()
-	server := alice.New(middleware.AccessControl, middleware.OptionsHandler, middleware.Logger).Then(router)
-
-	/*
-	 * Start web server
-	 */
-	log.Printf("SyncXpress server on %s:%d\n\n", *host, *port)
-	http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), server)
+	log.Println("MailSlurper started")
+	listener.StartHttpListener(listener.NewHttpListener("0.0.0.0", 8085))
 }
 
-func setupGlobalDatabaseConnection() {
-	var engine int
-	var host string
-	var port string
-	var database string
-	var userName string
-	var password string
-
-	switch settings.Config.DBEngine {
-	case "sqlite":
-		engine = smtp.ENGINE_SQLITE
-
-	case "mysql":
-		engine = smtp.ENGINE_MYSQL
-		host = settings.Config.DBHost
-		port = settings.Config.DBPort
-		database = settings.Config.DBDatabase
-		userName = settings.Config.DBUserName
-		password = settings.Config.DBPassword
-
-	case "mssql":
-		engine = smtp.ENGINE_MSSQL
-		host = settings.Config.DBHost
-		port = settings.Config.DBPort
-		database = settings.Config.DBDatabase
-		userName = settings.Config.DBUserName
-		password = settings.Config.DBPassword
-	}
-
-	smtp.Storage = smtp.MailStorage{
-		Engine:   engine,
-		Host:     host,
-		Port:     port,
-		Database: database,
-		UserName: userName,
-		Password: password,
-	}
-
-	err := smtp.Storage.Connect()
-
-	if err != nil {
-		log.Panic("Unable to connect to database: ", err)
-	}
-}
