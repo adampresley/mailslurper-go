@@ -13,6 +13,8 @@ import (
 	"github.com/adampresley/golangdb"
 	"github.com/adampresley/mailslurper/libmailslurper/mode/attachment"
 	"github.com/adampresley/mailslurper/libmailslurper/mode/mailitem"
+
+	"github.com/nu7hatch/gouuid"
 )
 
 /*
@@ -27,6 +29,14 @@ Disconnects from the database storage
 */
 func DisconnectFromStorage() {
 	golangdb.Db["lib"].Close()
+}
+
+/*
+Generate a UUID ID for database records.
+*/
+func GenerateId() string {
+	id, _ := gouuid.NewV4()
+	return id
 }
 
 /*
