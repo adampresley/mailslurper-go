@@ -5,8 +5,9 @@
 package attachment
 
 type Attachment struct {
-	Headers  *AttachmentHeader
-	Contents string
+	Id       int               `json:"id"`
+	Headers  *AttachmentHeader `json:"headers"`
+	Contents string            `json:"contents"`
 }
 
 func NewAttachment(headers *AttachmentHeader, contents string) *Attachment {
