@@ -1,3 +1,7 @@
+// Copyright 2013-2014 Adam Presley. All rights reserved
+// Use of this source code is governed by the MIT license
+// that can be found in the LICENSE file.
+
 package configuration
 
 import (
@@ -6,19 +10,38 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+
+	"github.com/adampresley/golangdb"
 )
 
 type Configuration struct {
-	WWWAddress  string  `json:"wwwAddress"`
-	WWWPort     int     `json:"wwwPort"`
-	SmtpAddress string  `json:"smtpAddress"`
-	SmtpPort    int     `json:"smtpPort"`
-	DBEngine    string  `json:"dbEngine"`
-	DBHost      string  `json:"dbHost"`
-	DBPort      string  `json:"dbPort"`
-	DBDatabase  string  `json:"dbDatabase"`
-	DBUserName  string  `json:"dbUserName"`
-	DBPassword  string  `json:"dbPassword"`
+	WWWAddress     string `json:"wwwAddress"`
+	WWWPort        int    `json:"wwwPort"`
+	ServiceAddress string `json:"serviceAddress"`
+	ServicePort    int    `json:"servicePort"`
+	SmtpAddress    string `json:"smtpAddress"`
+	SmtpPort       int    `json:"smtpPort"`
+	DBEngine       string `json:"dbEngine"`
+	DBHost         string `json:"dbHost"`
+	DBPort         int    `json:"dbPort"`
+	DBDatabase     string `json:"dbDatabase"`
+	DBUserName     string `json:"dbUserName"`
+	DBPassword     string `json:"dbPassword"`
+}
+
+func (this *Configuration) GetDatabaseConfiguration() *golangdb.DatabaseConnection {
+	return &golangdb.DatabaseConnection{
+		Engine:   this.DBEngine,
+		Address:  this.DBHost,
+		Port:     this.DBPort
+		Database: this.DBDatabase,
+		UserName: this.DBUserName,
+		Password: this.DBPassword,
+	}
+}
+
+func (this *Configuration) GetFullServiceAppAddress() string {
+	return fmt.Sprintf("%s:%d", this.ServiceAddress, this.ServicePort)
 }
 
 func (this *Configuration) GetFullSmtpBindingAddress() string {
@@ -54,6 +77,22 @@ func LoadConfiguration(reader io.Reader) (*Configuration, error) {
 	}
 
 	err = json.Unmarshal(contents.Bytes(), result)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
+
+func LoadConfigurationFromFile(fileName string) (*Configuration, error) {
+	result := &Configuration{}
+
+	configFileHandle, err := os.Open(fileName)
+	if err != nil {
+		return result, err
+	}
+
+	result, err = LoadConfiguration(configFileHandle)
 	if err != nil {
 		return result, err
 	}
