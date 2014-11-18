@@ -7,13 +7,14 @@ package smtpio
 import (
 	"bytes"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/adampresley/mailslurper/libmailslurper/smtpconstants"
 )
 
 type SmtpReader struct{
-	Connection *net.Conn
+	Connection net.Conn
 }
 
 /*

@@ -5,7 +5,6 @@
 package server
 
 import (
-	"fmt"
 	"log"
 	"net"
 
@@ -17,7 +16,7 @@ Establishes a listening connection to a socket on an address. This will
 return a net.Listener handle.
 */
 func SetupSmtpServerListener(address string) (net.Listener, error) {
-	return net.Listen("tcp", s.Address)
+	return net.Listen("tcp", address)
 }
 
 /*
@@ -49,12 +48,12 @@ func Dispatcher(serverPool *ServerPool, handle net.Listener, receiver chan maili
 			log.Panicf("ERROR - Error while accepting SMTP requests: %s", err)
 		}
 
-		*SmtpWorker, err := serverPool.GetAvailableWorker(connection, receiver)
+		smtpWorker, err := serverPool.GetAvailableWorker(connection, receiver)
 		if err != nil {
 			log.Println("ERROR -", err)
 			continue
 		}
 
-		SmtpWorker.Work()
+		smtpWorker.Work()
 	}
 }

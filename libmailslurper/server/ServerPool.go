@@ -29,7 +29,7 @@ workers. An array of workers is initialized with an ID
 and an initial state of SMTP_WORKER_IDLE.
 */
 func NewServerPool(maxWorkers int) *ServerPool {
-	var workers [maxWorkers]SmtpWorker
+	var workers = make([]SmtpWorker, maxWorkers)
 	result := &ServerPool{MaxWorkers: maxWorkers,}
 
 	for index := 0; index < maxWorkers; index++ {
@@ -51,13 +51,13 @@ func (this *ServerPool) GetAvailableWorker(connection net.Conn, receiver chan ma
 
 	for index := 0; index < this.MaxWorkers; index++ {
 		if this.SmtpWorkers[index].State == smtpconstants.SMTP_WORKER_IDLE {
-			result = &SmtpWorkers[index]
+			result = &this.SmtpWorkers[index]
 			result.State = smtpconstants.SMTP_WORKER_WORKING
 
 			result.Connection = connection
-			result.Reader = smtpio.Reader{Connection: &result.Connection,}
+			result.Reader = smtpio.SmtpReader{Connection: result.Connection,}
 			result.Receiver = receiver
-			result.Writer = smtpio.Writer{Connection: &result.Connection,}
+			result.Writer = smtpio.SmtpWriter{Connection: result.Connection,}
 		}
 	}
 

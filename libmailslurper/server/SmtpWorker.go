@@ -5,8 +5,8 @@
 package server
 
 import (
-	"bytes"
 	"errors"
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -20,11 +20,11 @@ import (
 type SmtpWorker struct{
 	Connection net.Conn
 	Mail       mailitem.MailItem
-	Reader     smtpio.Reader
+	Reader     smtpio.SmtpReader
 	Receiver   chan mailitem.MailItem
 	State      smtpconstants.SmtpWorkerState
 	WorkerId   int
-	Writer     smtpio.Writer
+	Writer     smtpio.SmtpWriter
 }
 
 /*
@@ -36,16 +36,16 @@ func (this *SmtpWorker) ExecuteCommand(command smtpconstants.SmtpCommand, stream
 	var err error
 	var response string
 
-	var headers *mailitem.MailHeader
-	var body *mailitem.MailBody
+	var headers mailitem.MailHeader
+	var body mailitem.MailBody
 
 	streamInput = strings.TrimSpace(streamInput)
 
 	switch command {
-	case HELO:
+	case smtpconstants.HELO:
 		err = this.Process_HELO(streamInput)
 
-	case MAIL:
+	case smtpconstants.MAIL:
 		response, err := this.Process_MAIL(streamInput)
 		if err != nil {
 			log.Println("ERROR -", err)
@@ -54,7 +54,7 @@ func (this *SmtpWorker) ExecuteCommand(command smtpconstants.SmtpCommand, stream
 			log.Println("Mail from", response)
 		}
 
-	case RCPT:
+	case smtpconstants.RCPT:
 		response, err = this.Process_RCPT(streamInput)
 		if err != nil {
 			log.Println("ERROR -", err)
@@ -62,7 +62,7 @@ func (this *SmtpWorker) ExecuteCommand(command smtpconstants.SmtpCommand, stream
 			this.Mail.ToAddresses = append(this.Mail.ToAddresses, response)
 		}
 
-	case DATA:
+	case smtpconstants.DATA:
 		headers, body, err = this.Process_DATA(streamInput)
 		if err != nil {
 			log.Println("ERROR -", err)
@@ -117,9 +117,9 @@ This function will return the following items.
 	2. Body breakdown (MailBody)
 	3. error structure
 */
-func (this *SmtpWorker) Process_DATA(streamInput string) (MailHeader, MailBody, error) {
-	header := MailHeader{}
-	body := MailBody{}
+func (this *SmtpWorker) Process_DATA(streamInput string) (mailitem.MailHeader, mailitem.MailBody, error) {
+	header := mailitem.MailHeader{}
+	body := mailitem.MailBody{}
 
 	commandCheck := strings.Index(strings.ToLower(streamInput), "data")
 	if commandCheck < 0 {
@@ -127,7 +127,7 @@ func (this *SmtpWorker) Process_DATA(streamInput string) (MailHeader, MailBody, 
 	}
 
 	this.Writer.SendDataResponse()
-	entireMailContents = this.Reader.ReadDataBlock()
+	entireMailContents := this.Reader.ReadDataBlock()
 
 	/*
 	 * Parse the header content
@@ -139,7 +139,7 @@ func (this *SmtpWorker) Process_DATA(streamInput string) (MailHeader, MailBody, 
 	 */
 	body.Parse(entireMailContents, header.Boundary)
 
-	parser.SendOkResponse()
+	this.Writer.SendOkResponse()
 	return header, body, nil
 }
 
@@ -198,7 +198,7 @@ func (this *SmtpWorker) Process_RCPT(streamInput string) (string, error) {
 		return "", errors.New("Invalid command for RCPT TO")
 	}
 
-	split := strings.Split(line, ":")
+	split := strings.Split(streamInput, ":")
 	if len(split) < 2 {
 		return "", errors.New("RCPT TO command format is invalid")
 	}
@@ -217,11 +217,11 @@ start processing commands, and finally close the connection.
 func (this *SmtpWorker) Work() {
 	go func() {
 		var streamInput string
-		var command SmtpCommand
+		var command smtpconstants.SmtpCommand
 		var err error
 
 		this.InitializeMailItem()
-		this.SayHello()
+		this.Writer.SayHello()
 
 		/*
 		 * Read from the connection until we receive a QUIT command

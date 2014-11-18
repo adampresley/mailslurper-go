@@ -7,7 +7,7 @@
 package main
 
 import (
-//	"fmt"
+	"fmt"
 	"log"
 //	"net/http"
 	"os"
@@ -16,6 +16,8 @@ import (
 	"runtime"
 
 	"github.com/adampresley/mailslurper/libmailslurper/configuration"
+	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
+	"github.com/adampresley/mailslurper/libmailslurper/server"
 	"github.com/adampresley/mailslurper/libmailslurper/storage"
 	"github.com/adampresley/mailslurper/mailslurperservice/listener"
 
@@ -56,17 +58,24 @@ func main() {
 	defer storage.DisconnectFromStorage()
 
 	/*
-	 * Setup the SMTP listener
-	smtpServer := smtp.Server{Address: fmt.Sprintf("%s:%d", settings.Config.SmtpAddress, int(settings.Config.SmtpPort))}
-	defer smtpServer.Close()
+	 * Setup the server pool
 	 */
+	pool := server.NewServerPool(10)
 
 	/*
-	 * Start up the SMTP server and serve requests
-	 * out of a goroutine.
-	smtpServer.Connect()
-	go smtpServer.ProcessRequests()
+	 * Setup the SMTP listener
 	 */
+	smtpServer, err := server.SetupSmtpServerListener(fmt.Sprintf("%s:%d", config.SmtpAddress, config.SmtpPort))
+	if err != nil {
+		log.Println("ERROR - There was a problem starting the SMTP listener: ", err)
+		os.Exit(0)
+	}
+
+	defer server.CloseSmtpServerListener(smtpServer)
+
+	receiver := make(chan mailitem.MailItem, 1000)
+	go server.Dispatcher(pool, smtpServer, receiver)
+
 
 	/*
 	 * Setup web server for the administrator

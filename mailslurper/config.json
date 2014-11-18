@@ -8,7 +8,7 @@
 	"dbEngine": "SQLite",
 	"dbHost": "",
 	"dbPort": 0,
-	"dbDatabase": "",
+	"dbDatabase": "mailslurper.db",
 	"dbUserName": "",
 	"dbPassword": ""
 }

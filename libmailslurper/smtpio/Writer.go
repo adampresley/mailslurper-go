@@ -5,13 +5,14 @@
 package smtpio
 
 import (
+	"log"
 	"net"
 
 	"github.com/adampresley/mailslurper/libmailslurper/smtpconstants"
 )
 
 type SmtpWriter struct{
-	Connection *net.Conn
+	Connection net.Conn
 }
 
 /*
@@ -38,7 +39,7 @@ func (this *SmtpWriter) SayHello() error {
 }
 
 func (this *SmtpWriter) SendDataResponse() error {
-	return this.SendResponse(SMTP_DATA_RESPONSE_MESSAGE)
+	return this.SendResponse(smtpconstants.SMTP_DATA_RESPONSE_MESSAGE)
 }
 
 /*
@@ -55,5 +56,5 @@ func (this *SmtpWriter) SendHELOResponse() error {
 }
 
 func (this *SmtpWriter) SendOkResponse() error {
-	return this.SendResponse(SMTP_OK_MESSAGE)
+	return this.SendResponse(smtpconstants.SMTP_OK_MESSAGE)
 }
