@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 
 	"github.com/adampresley/golangdb"
 )
@@ -31,9 +33,9 @@ type Configuration struct {
 
 func (this *Configuration) GetDatabaseConfiguration() *golangdb.DatabaseConnection {
 	return &golangdb.DatabaseConnection{
-		Engine:   this.DBEngine,
+		Engine:   golangdb.GetDatabaseEngineFromName(this.DBEngine),
 		Address:  this.DBHost,
-		Port:     this.DBPort
+		Port:     this.DBPort,
 		Database: this.DBDatabase,
 		UserName: this.DBUserName,
 		Password: this.DBPassword,

@@ -4,6 +4,13 @@
 
 package attachment
 
+import (
+	"log"
+	"strings"
+
+	"github.com/adampresley/mailslurper/libmailslurper/model/header"
+)
+
 type AttachmentHeader struct {
 	ContentType             string `json:"contentType"`
 	MIMEVersion             string `json:"mimeVersion"`
@@ -52,7 +59,7 @@ func (this *AttachmentHeader) Parse(contents string) {
 	 * and figure out what headers are present. Store them.
 	 * Sadly some headers require special processing.
 	 */
-	contents = unfoldHeaders(contents)
+	contents = header.UnfoldHeaders(contents)
 	splitHeader := strings.Split(contents, "\r\n")
 	numLines := len(splitHeader)
 

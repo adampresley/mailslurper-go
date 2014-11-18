@@ -21,7 +21,7 @@ import (
 Creates a global connection handle in a map named "lib".
 */
 func ConnectToStorage(connectionInfo *golangdb.DatabaseConnection) error {
-	return connection.Connect("lib")
+	return connectionInfo.Connect("lib")
 }
 
 /*
@@ -35,8 +35,8 @@ func DisconnectFromStorage() {
 Generate a UUID ID for database records.
 */
 func GenerateId() string {
-	id, _ := gouuid.NewV4()
-	return id
+	id, _ := uuid.NewV4()
+	return id.String()
 }
 
 /*
@@ -68,13 +68,13 @@ func GetAttachment(id string) (attachment.Attachment, error) {
 
 	rows.Scan(&fileName, &contentType, &content)
 
-	result.Headers = attachment.AttachmentHeader{
+	result.Headers = &attachment.AttachmentHeader{
 		FileName: fileName,
 		ContentType: contentType,
 	}
 
 	result.Contents = content
-	return result
+	return result, nil
 }
 
 /*
@@ -83,7 +83,7 @@ Takes an ID as a filter. If ID == "" then all records are returned.
 */
 func GetMails(id string) ([]mailitem.MailItem, error) {
 	result := make([]mailitem.MailItem, 0)
-	attachments := make([]attachment.Attachment, 0)
+	attachments := make([]*attachment.Attachment, 0)
 
 	sql := `
 		SELECT
@@ -99,8 +99,7 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 		FROM mailitem
 			LEFT OUTER JOIN attachment ON mailitem.id=attachment.mailItemId
 
-		WHERE 1=1
-	`
+		WHERE 1=1`
 
 	if id != "" {
 		sql = sql + " AND mailitem.id=? "
@@ -121,6 +120,7 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 	 */
 	currentMailItemId := ""
 	newItemCreated := false
+	newItem := mailitem.MailItem{}
 
 	for rows.Next() {
 		var mailItemId string
@@ -129,7 +129,7 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 		var toAddressList string
 		var subject string
 		var xmailer string
-		var attachmentId int
+		var attachmentId string
 		var fileName string
 
 		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &attachmentId, &fileName)
@@ -147,15 +147,17 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 		 * multiple attachments. As such make sure we are getting all
 		 * the IDs first, and the mail item only once.
 		 */
+		newItem = mailitem.MailItem{}
+
 		if currentMailItemId != "" && currentMailItemId == mailItemId {
-			if attachmentId > 0 {
-				attachments = append(attachments, attachment.Attachment{Id: attachmentId, Headers: attachment.AttachmentHeader{FileName: fileName}})
+			if attachmentId != "" {
+				attachments = append(attachments, &attachment.Attachment{Id: attachmentId, Headers: &attachment.AttachmentHeader{FileName: fileName}})
 			}
 
 			if !newItemCreated {
 				newItemCreated = true
 
-				newItem := mailitem.MailItem{
+				newItem = mailitem.MailItem{
 					Id:              mailItemId,
 					DateSent:        dateSent,
 					FromAddress:     fromAddress,
@@ -170,15 +172,15 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 			log.Printf("Retrieving mail item %d from %s with a subject of %s", mailItemId, fromAddress, subject)
 
 			result = append(result, newItem)
-			attachments = make([]attachment.Attachment, 0)
+			attachments = make([]*attachment.Attachment, 0)
 
 			if attachmentId != "" {
-				attachments = append(attachments, attachment.Attachment{Id: attachmentId, Headers: attachment.AttachmentHeader{FileName: fileName}})
+				attachments = append(attachments, &attachment.Attachment{Id: attachmentId, Headers: &attachment.AttachmentHeader{FileName: fileName}})
 			}
 
 			newItemCreated = true
 
-			newItem := mailitem.MailItem{
+			newItem = mailitem.MailItem{
 				Id:              mailItemId,
 				DateSent:        dateSent,
 				FromAddress:     fromAddress,
@@ -198,14 +200,14 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 	result = append(result, newItem)
 
 	rows.Close()
-	return result
+	return result, nil
 }
 
 func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*attachment.Attachment) error {
 	for _, a := range attachments {
 		attachmentId := GenerateId()
 
-		statement, err = transaction.Prepare(`
+		statement, err := transaction.Prepare(`
 			INSERT INTO attachment (
 				  id
 				, mailItemId
@@ -218,8 +220,8 @@ func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*att
 				, ?
 				, ?
 				, ?
-			)`
-		)
+			)
+		`)
 
 		if err != nil {
 			return fmt.Errorf("Error preparing insert attachment statement: %s", err)
@@ -250,7 +252,7 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 		 */
 		transaction, err := golangdb.Db["lib"].Begin()
 		if err != nil {
-			return 0, fmt.Errorf("Error starting transaction in StoreMail: %s", err)
+			return "", fmt.Errorf("Error starting transaction in StoreMail: %s", err)
 		}
 
 		/*
@@ -277,16 +279,16 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 				, ?
 				, ?
 				, ?
-			)`
-		)
+			)
+		`)
 
 		if err != nil {
-			return 0, fmt.Errorf("Error preparing insert statement for mail item in StoreMail: %s", err)
+			return "", fmt.Errorf("Error preparing insert statement for mail item in StoreMail: %s", err)
 		}
 
 		mailItemId := GenerateId()
 
-		result, err := statement.Exec(
+		_, err = statement.Exec(
 			mailItemId,
 			mailItem.DateSent,
 			mailItem.FromAddress,
@@ -300,7 +302,7 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 
 		if err != nil {
 			transaction.Rollback()
-			return 0, fmt.Errorf("Error executing insert for mail item in StoreMail: %s", err)
+			return "", fmt.Errorf("Error executing insert for mail item in StoreMail: %s", err)
 		}
 
 		statement.Close()
@@ -309,9 +311,9 @@ func StoreMail(mailItem *mailitem.MailItem) (string, error) {
 		/*
 		 * Insert attachments
 		 */
-		err = storeAttachments(mailItemId, transaction, mailItem.Attachments); err != nil {
+		if err = storeAttachments(mailItemId, transaction, mailItem.Attachments); err != nil {
 			transaction.Rollback()
-			return 0, fmt.Errorf("Unable to insert attachments in StoreMail: %s", err)
+			return "", fmt.Errorf("Unable to insert attachments in StoreMail: %s", err)
 		}
 
 		transaction.Commit()

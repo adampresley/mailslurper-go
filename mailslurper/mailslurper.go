@@ -7,12 +7,12 @@
 package main
 
 import (
-	"fmt"
+//	"fmt"
 	"log"
-	"net/http"
+//	"net/http"
 	"os"
-	"os/signal"
-	"path/filepath"
+//	"os/signal"
+//	"path/filepath"
 	"runtime"
 
 	"github.com/adampresley/mailslurper/libmailslurper/configuration"
@@ -46,7 +46,7 @@ func main() {
 	/*
 	 * Setup global database connection handle
 	 */
-	databaseConnection := configuration.GetDatabaseConfiguration()
+	databaseConnection := config.GetDatabaseConfiguration()
 	err = storage.ConnectToStorage(databaseConnection)
 	if err != nil {
 		log.Println("ERROR - There was an error connecting to your data storage: ", err)

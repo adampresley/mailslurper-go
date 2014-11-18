@@ -5,7 +5,11 @@
 package mailitem
 
 import (
+	"log"
+	"strings"
+
 	"github.com/adampresley/mailslurper/libmailslurper/datetime"
+	"github.com/adampresley/mailslurper/libmailslurper/model/header"
 )
 
 type MailHeader struct {
@@ -63,7 +67,7 @@ func (this *MailHeader) Parse(contents string) {
 	 * and figure out what headers are present. Store them.
 	 * Sadly some headers require special processing.
 	 */
-	contents = UnfoldHeaders(contents)
+	contents = header.UnfoldHeaders(contents)
 	splitHeader := strings.Split(contents, "\r\n")
 	numLines := len(splitHeader)
 
@@ -106,15 +110,4 @@ func (this *MailHeader) Parse(contents string) {
 			log.Println("Mail Subject: ", this.Subject)
 		}
 	}
-}
-
-/*
-The RFC-2822 defines "folding" as the process of breaking up large
-header lines into multiple lines. Long Subject lines or Content-Type
-lines (with boundaries) sometimes do this. This function will "unfold"
-them into a single line.
-*/
-func UnfoldHeaders(contents string) string {
-	headerUnfolderRegex := regexp.MustCompile("(.*?)\r\n\\s{1}(.*?)\r\n")
-	return headerUnfolderRegex.ReplaceAllString(contents, "$1 $2\r\n")
 }

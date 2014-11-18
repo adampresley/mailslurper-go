@@ -26,13 +26,7 @@ type MailItem struct {
 	Attachments []*attachment.Attachment `json:"attachments"`
 }
 
-func NewMailItem(
-	id string,
-	dateSent, fromAddress string,
-	toAddresses []string,
-	subject, xMailer, body, contentType, boundary string,
-	attachments []*attachment.Attachments
-) {
+func NewMailItem(id, dateSent, fromAddress string, toAddresses []string, subject, xMailer, body, contentType, boundary string, attachments []*attachment.Attachment) *MailItem {
 	return &MailItem{
 		Id:          id,
 		DateSent:    dateSent,

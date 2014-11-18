@@ -5,6 +5,9 @@
 package mailitem
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/adampresley/mailslurper/libmailslurper/model/attachment"
 )
 
