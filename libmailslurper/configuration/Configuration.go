@@ -16,6 +16,11 @@ import (
 	"github.com/adampresley/golangdb"
 )
 
+/*
+The Configuration structure represents a JSON
+configuration file with settings for how to bind
+servers and connect to databases.
+*/
 type Configuration struct {
 	WWWAddress     string `json:"wwwAddress"`
 	WWWPort        int    `json:"wwwPort"`
@@ -32,6 +37,10 @@ type Configuration struct {
 	MaxWorkers     int    `json:"maxWorkers"`
 }
 
+/*
+Returns a pointer to a DatabaseConnection structure with data
+pulled from a Configuration structure.
+*/
 func (this *Configuration) GetDatabaseConfiguration() *golangdb.DatabaseConnection {
 	return &golangdb.DatabaseConnection{
 		Engine:   golangdb.GetDatabaseEngineFromName(this.DBEngine),
@@ -43,18 +52,32 @@ func (this *Configuration) GetDatabaseConfiguration() *golangdb.DatabaseConnecti
 	}
 }
 
+/*
+Returns a full address and port for the MailSlurper service
+application.
+*/
 func (this *Configuration) GetFullServiceAppAddress() string {
 	return fmt.Sprintf("%s:%d", this.ServiceAddress, this.ServicePort)
 }
 
+/*
+Returns a full address and port for the MailSlurper SMTP
+server.
+*/
 func (this *Configuration) GetFullSmtpBindingAddress() string {
 	return fmt.Sprintf("%s:%d", this.SmtpAddress, this.SmtpPort)
 }
 
+/*
+Returns a full address and port for the Web application.
+*/
 func (this *Configuration) GetFullWwwBindingAddress() string {
 	return fmt.Sprintf("%s:%d", this.WWWAddress, this.WWWPort)
 }
 
+/*
+Reads data from a Reader into a new Configuration structure.
+*/
 func LoadConfiguration(reader io.Reader) (*Configuration, error) {
 	var err error
 	var contents bytes.Buffer
@@ -87,6 +110,10 @@ func LoadConfiguration(reader io.Reader) (*Configuration, error) {
 	return result, nil
 }
 
+/*
+Reads data from a file into a Configuration object. Makes use of
+LoadConfiguration().
+*/
 func LoadConfigurationFromFile(fileName string) (*Configuration, error) {
 	result := &Configuration{}
 
@@ -103,6 +130,10 @@ func LoadConfigurationFromFile(fileName string) (*Configuration, error) {
 	return result, nil
 }
 
+/*
+Saves the current state of a Configuration structure
+into a JSON file.
+*/
 func (this *Configuration) SaveConfiguration(configFile string) error {
 	json, err := json.Marshal(this)
 	if err != nil {

@@ -21,7 +21,19 @@ import (
 Creates a global connection handle in a map named "lib".
 */
 func ConnectToStorage(connectionInfo *golangdb.DatabaseConnection) error {
-	return connectionInfo.Connect("lib")
+	var err error
+
+	err = connectionInfo.Connect("lib")
+	if err != nil {
+		return err
+	}
+
+	switch connectionInfo.Engine {
+	case golangdb.SQLITE:
+		CreateSqlliteDatabase()
+	}
+
+	return nil
 }
 
 /*

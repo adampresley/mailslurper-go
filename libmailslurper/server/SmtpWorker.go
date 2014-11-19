@@ -265,6 +265,10 @@ func (this *SmtpWorker) Work() {
 	}()
 }
 
+/*
+Determines if the time elapsed since a start time has exceeded
+the command timeout.
+*/
 func (this *SmtpWorker) TimeoutHasExpired(startTime time.Time) bool {
 	return int(time.Since(startTime).Seconds()) > smtpconstants.COMMAND_TIMEOUT_SECONDS
 }

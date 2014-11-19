@@ -12,7 +12,7 @@ import (
 	"runtime"
 
 	"github.com/adampresley/mailslurper/libmailslurper/configuration"
-	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
+	"github.com/adampresley/mailslurper/libmailslurper/receiver"
 	"github.com/adampresley/mailslurper/libmailslurper/server"
 	"github.com/adampresley/mailslurper/libmailslurper/storage"
 	"github.com/adampresley/mailslurper/mailslurperservice/listener"
@@ -45,8 +45,8 @@ func main() {
 	 * Setup global database connection handle
 	 */
 	databaseConnection := config.GetDatabaseConfiguration()
-	err = storage.ConnectToStorage(databaseConnection)
-	if err != nil {
+
+	if err = storage.ConnectToStorage(databaseConnection); err != nil {
 		log.Println("ERROR - There was an error connecting to your data storage: ", err)
 		os.Exit(0)
 	}
@@ -56,15 +56,12 @@ func main() {
 	/*
 	 * Setup the server pool
 	 */
-	log.Println("INFO - Worker pool configured for", config.MaxWorkers, "workers")
 	pool := server.NewServerPool(config.MaxWorkers)
 
 	/*
 	 * Setup the SMTP listener
 	 */
-	log.Println("INFO - Setting up SMTP listener on", config.GetFullSmtpBindingAddress())
-
-	smtpServer, err := server.SetupSmtpServerListener(config.GetFullSmtpBindingAddress())
+	smtpServer, err := server.SetupSmtpServerListener(config.GetFullSmtpBindingAddress());
 	if err != nil {
 		log.Println("ERROR - There was a problem starting the SMTP listener: ", err)
 		os.Exit(0)
@@ -72,13 +69,20 @@ func main() {
 
 	defer server.CloseSmtpServerListener(smtpServer)
 
-	receiver := make(chan mailitem.MailItem, 1000)
-	go server.Dispatcher(pool, smtpServer, receiver)
+	/*
+	 * Setup receivers (subscribers) to handle new mail items.
+	 */
+	receivers := []receiver.IMailItemReceiver{
+		receiver.DatabaseReceiver{},
+	}
+
+	/*
+	 * Start the SMTP dispatcher
+	 */
+	go server.Dispatcher(pool, smtpServer, receivers)
 
 	/*
 	 * Start the services server
 	 */
-	log.Println("INFO - MailSlurper starting on", config.GetFullServiceAppAddress())
 	listener.StartHttpListener(listener.NewHttpListener(config.ServiceAddress, config.ServicePort))
 }
-

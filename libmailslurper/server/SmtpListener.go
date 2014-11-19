@@ -9,6 +9,7 @@ import (
 	"net"
 
 	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
+	"github.com/adampresley/mailslurper/libmailslurper/receiver"
 )
 
 /*
@@ -23,6 +24,7 @@ func SetupSmtpServerListener(address string) (*net.TCPListener, error) {
 		return result, err
 	}
 
+	log.Println("INFO - SMTP listener running on", address)
 	return net.ListenTCP("tcp", tcpAddress)
 }
 
@@ -43,9 +45,29 @@ channel and handles storage.
 Meanwhile this method will loop forever and wait for client connections (blocking).
 When a connection is recieved a goroutine is started to create a new MailItemStruct
 and parser and the parser process is started. If the parsing is successful
-the MailItemStruct is added to the database writing channel.
+the MailItemStruct is added to a channel. An receivers passed in will be
+listening on that channel and may do with the mail item as they wish.
 */
-func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receiver chan mailitem.MailItem) {
+func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receivers []receiver.IMailItemReceiver) {
+	/*
+	 * Setup our receivers. These guys are basically subscribers to
+	 * the MailItem channel.
+	 */
+	mailItemChannel := make(chan mailitem.MailItem, 1000)
+
+	go func() {
+		log.Println("INFO -", len(receivers), "receiver(s) listening")
+
+		for {
+			select {
+			case item := <- mailItemChannel:
+				for _, r := range receivers {
+					go r.Receive(&item)
+				}
+			}
+		}
+	}()
+
 	/*
 	 * Now start accepting connections for SMTP
 	 */
@@ -55,7 +77,7 @@ func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receiver chan m
 			log.Panicf("ERROR - Error while accepting SMTP requests: %s", err)
 		}
 
-		smtpWorker, err := serverPool.GetAvailableWorker(connection.(*net.TCPConn), receiver)
+		smtpWorker, err := serverPool.GetAvailableWorker(connection.(*net.TCPConn), mailItemChannel)
 		if err != nil {
 			log.Println("ERROR -", err)
 			continue

@@ -80,6 +80,9 @@ func GetCommandFromString(input string) (SmtpCommand, error) {
 	return result, nil
 }
 
+/*
+Returns the string representation of a command.
+*/
 func (this SmtpCommand) String() string {
 	return SmtpCommandsToStrings[this]
 }

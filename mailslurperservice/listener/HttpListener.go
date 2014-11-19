@@ -2,6 +2,7 @@ package listener
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/adampresley/mailslurper/mailslurperservice/controllers/versionController"
@@ -62,5 +63,6 @@ func setupHttpRouter() http.Handler {
 }
 
 func StartHttpListener(httpListener *http.Server) error {
+	log.Println("INFO - HTTP listener started on", httpListener.Addr)
 	return httpListener.ListenAndServe()
 }

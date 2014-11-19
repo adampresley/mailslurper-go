@@ -6,6 +6,7 @@ package server
 
 import(
 	"errors"
+	"log"
 	"net"
 
 	"github.com/adampresley/mailslurper/libmailslurper/model/mailitem"
@@ -35,6 +36,8 @@ func NewServerPool(maxWorkers int) *ServerPool {
 	for index := 0; index < maxWorkers; index++ {
 		workers[index] = SmtpWorker{WorkerId: index + 1, State: smtpconstants.SMTP_WORKER_IDLE,}
 	}
+
+	log.Println("INFO - Worker pool configured for", maxWorkers, "worker(s)")
 
 	result.SmtpWorkers = workers
 	return result
