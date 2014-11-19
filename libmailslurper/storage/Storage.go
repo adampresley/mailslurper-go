@@ -105,6 +105,9 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 			, mailitem.toAddressList
 			, mailitem.subject
 			, mailitem.xmailer
+			, mailitem.body
+			, mailitem.contentType
+			, mailitem.boundary
 			, attachment.id AS attachmentId
 			, attachment.fileName
 
@@ -141,10 +144,13 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 		var toAddressList string
 		var subject string
 		var xmailer string
+		var body string
+		var contentType string
+		var boundary string
 		var attachmentId string
 		var fileName string
 
-		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &attachmentId, &fileName)
+		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary, &attachmentId, &fileName)
 
 		/*
 		 * If this is our first iteration then we haven't looked at a
@@ -176,6 +182,9 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 					ToAddresses:     strings.Split(toAddressList, "; "),
 					Subject:         subject,
 					XMailer:         xmailer,
+					Body:            body,
+					ContentType:     contentType,
+					Boundary:        boundary,
 					Attachments:     nil,
 				}
 			}
