@@ -12,7 +12,7 @@ import (
 )
 
 type SmtpWriter struct{
-	Connection net.Conn
+	Connection *net.TCPConn
 }
 
 /*

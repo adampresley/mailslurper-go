@@ -18,7 +18,7 @@ import (
 )
 
 type SmtpWorker struct{
-	Connection net.Conn
+	Connection *net.TCPConn
 	Mail       mailitem.MailItem
 	Reader     smtpio.SmtpReader
 	Receiver   chan mailitem.MailItem
@@ -234,7 +234,7 @@ func (this *SmtpWorker) Work() {
 			command, err = smtpconstants.GetCommandFromString(streamInput)
 
 			if err != nil {
-				log.Println("ERROR -", err)
+				log.Println("ERROR finding command from input", streamInput, "-", err)
 				this.State = smtpconstants.SMTP_WORKER_ERROR
 				continue
 			}
@@ -260,6 +260,7 @@ func (this *SmtpWorker) Work() {
 		this.Writer.SayGoodbye()
 		this.Connection.Close()
 
+		this.State = smtpconstants.SMTP_WORKER_IDLE
 		this.Receiver <- this.Mail
 	}()
 }

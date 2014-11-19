@@ -7,12 +7,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
-//	"net/http"
 	"os"
-//	"os/signal"
-//	"path/filepath"
 	"runtime"
 
 	"github.com/adampresley/mailslurper/libmailslurper/configuration"
@@ -60,12 +56,15 @@ func main() {
 	/*
 	 * Setup the server pool
 	 */
-	pool := server.NewServerPool(10)
+	log.Println("INFO - Worker pool configured for", config.MaxWorkers, "workers")
+	pool := server.NewServerPool(config.MaxWorkers)
 
 	/*
 	 * Setup the SMTP listener
 	 */
-	smtpServer, err := server.SetupSmtpServerListener(fmt.Sprintf("%s:%d", config.SmtpAddress, config.SmtpPort))
+	log.Println("INFO - Setting up SMTP listener on", config.GetFullSmtpBindingAddress())
+
+	smtpServer, err := server.SetupSmtpServerListener(config.GetFullSmtpBindingAddress())
 	if err != nil {
 		log.Println("ERROR - There was a problem starting the SMTP listener: ", err)
 		os.Exit(0)
@@ -76,41 +75,10 @@ func main() {
 	receiver := make(chan mailitem.MailItem, 1000)
 	go server.Dispatcher(pool, smtpServer, receiver)
 
-
-	/*
-	 * Setup web server for the administrator
-	 */
-/*	profiling.Timer.Step("Setup HTTP administrator")
-	requestRouter := mux.NewRouter()
-
-	// Home
-	requestRouter.HandleFunc("/", controllers.Home).Methods("GET")
-
-	// Mail items
-	requestRouter.HandleFunc("/mail", controllers.GetMailItem).Methods("GET")
-	requestRouter.HandleFunc("/mails", controllers.GetMailCollection).Methods("GET")
-	requestRouter.HandleFunc("/attachment", controllers.DownloadAttachment).Methods("GET")
-
-	// Configuration
-	requestRouter.HandleFunc("/configuration", controllers.Config).Methods("GET")
-	requestRouter.HandleFunc("/config", controllers.GetConfig).Methods("GET")
-	requestRouter.HandleFunc("/config", controllers.SaveConfig).Methods("PUT")
-
-	// Web-sockets
-	requestRouter.HandleFunc("/ws", smtp.WebsocketHandler)
-
-	// Static requests
-	requestRouter.PathPrefix("/resources/").Handler(http.StripPrefix("/resources/", http.FileServer(http.Dir(staticPath))))
-
-	profiling.Timer.Step("Serving requests")
-	log.Printf("MailSlurper administrator started on %s (%s)\n\n", settings.Config.GetFullListenAddress(), settings.Config.WWW)
-	http.ListenAndServe(settings.Config.GetFullListenAddress(), requestRouter)
-*/
-
 	/*
 	 * Start the services server
 	 */
-	log.Println("MailSlurper started")
-	listener.StartHttpListener(listener.NewHttpListener("0.0.0.0", 8085))
+	log.Println("INFO - MailSlurper starting on", config.GetFullServiceAppAddress())
+	listener.StartHttpListener(listener.NewHttpListener(config.ServiceAddress, config.ServicePort))
 }
 

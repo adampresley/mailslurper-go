@@ -33,7 +33,7 @@ func NewServerPool(maxWorkers int) *ServerPool {
 	result := &ServerPool{MaxWorkers: maxWorkers,}
 
 	for index := 0; index < maxWorkers; index++ {
-		workers[index] = SmtpWorker{WorkerId: index, State: smtpconstants.SMTP_WORKER_IDLE,}
+		workers[index] = SmtpWorker{WorkerId: index + 1, State: smtpconstants.SMTP_WORKER_IDLE,}
 	}
 
 	result.SmtpWorkers = workers
@@ -46,7 +46,7 @@ there is a worker available. If there is not a worker
 available an error is returned. If a worker is returned
 its state is set to SMTP_WORKER_WORKING.
 */
-func (this *ServerPool) GetAvailableWorker(connection net.Conn, receiver chan mailitem.MailItem) (*SmtpWorker, error) {
+func (this *ServerPool) GetAvailableWorker(connection *net.TCPConn, receiver chan mailitem.MailItem) (*SmtpWorker, error) {
 	result := &SmtpWorker{}
 
 	for index := 0; index < this.MaxWorkers; index++ {
@@ -55,9 +55,11 @@ func (this *ServerPool) GetAvailableWorker(connection net.Conn, receiver chan ma
 			result.State = smtpconstants.SMTP_WORKER_WORKING
 
 			result.Connection = connection
-			result.Reader = smtpio.SmtpReader{Connection: result.Connection,}
+			result.Reader = smtpio.SmtpReader{Connection: connection,}
 			result.Receiver = receiver
-			result.Writer = smtpio.SmtpWriter{Connection: result.Connection,}
+			result.Writer = smtpio.SmtpWriter{Connection: connection,}
+
+			break
 		}
 	}
 

@@ -15,14 +15,21 @@ import (
 Establishes a listening connection to a socket on an address. This will
 return a net.Listener handle.
 */
-func SetupSmtpServerListener(address string) (net.Listener, error) {
-	return net.Listen("tcp", address)
+func SetupSmtpServerListener(address string) (*net.TCPListener, error) {
+	result := &net.TCPListener{}
+
+	tcpAddress, err := net.ResolveTCPAddr("tcp", address)
+	if err != nil {
+		return result, err
+	}
+
+	return net.ListenTCP("tcp", tcpAddress)
 }
 
 /*
 Closes a socket connection in an Server object. Most likely used in a defer call.
 */
-func CloseSmtpServerListener(handle net.Listener) {
+func CloseSmtpServerListener(handle *net.TCPListener) {
 	handle.Close()
 }
 
@@ -38,7 +45,7 @@ When a connection is recieved a goroutine is started to create a new MailItemStr
 and parser and the parser process is started. If the parsing is successful
 the MailItemStruct is added to the database writing channel.
 */
-func Dispatcher(serverPool *ServerPool, handle net.Listener, receiver chan mailitem.MailItem) {
+func Dispatcher(serverPool *ServerPool, handle *net.TCPListener, receiver chan mailitem.MailItem) {
 	/*
 	 * Now start accepting connections for SMTP
 	 */
@@ -48,7 +55,7 @@ func Dispatcher(serverPool *ServerPool, handle net.Listener, receiver chan maili
 			log.Panicf("ERROR - Error while accepting SMTP requests: %s", err)
 		}
 
-		smtpWorker, err := serverPool.GetAvailableWorker(connection, receiver)
+		smtpWorker, err := serverPool.GetAvailableWorker(connection.(*net.TCPConn), receiver)
 		if err != nil {
 			log.Println("ERROR -", err)
 			continue

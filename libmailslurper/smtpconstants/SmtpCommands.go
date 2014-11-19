@@ -62,6 +62,10 @@ if the string contains "DATA" then the value 1 (the constant DATA) will be retur
 func GetCommandFromString(input string) (SmtpCommand, error) {
 	result := NONE
 
+	if input == "" {
+		return result, nil
+	}
+
 	for key, value := range SmtpCommands {
 		if strings.Index(strings.ToLower(input), key) > -1 {
 			result = value

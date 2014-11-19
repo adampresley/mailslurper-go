@@ -14,7 +14,7 @@ import (
 )
 
 type SmtpReader struct{
-	Connection net.Conn
+	Connection *net.TCPConn
 }
 
 /*

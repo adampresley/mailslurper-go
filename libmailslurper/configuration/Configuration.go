@@ -29,6 +29,7 @@ type Configuration struct {
 	DBDatabase     string `json:"dbDatabase"`
 	DBUserName     string `json:"dbUserName"`
 	DBPassword     string `json:"dbPassword"`
+	MaxWorkers     int    `json:"maxWorkers"`
 }
 
 func (this *Configuration) GetDatabaseConfiguration() *golangdb.DatabaseConnection {

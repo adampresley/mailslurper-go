@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
 	numMails = 5
 	address = "127.0.0.1"
-	smtpPort = 8000
+	smtpPort = 25
 
 	me = "someone@another.com"
 	to = "bob@bobtestingmailslurper.com"
