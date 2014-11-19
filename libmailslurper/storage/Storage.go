@@ -54,7 +54,7 @@ func GenerateId() string {
 /*
 Returns an attachment by ID
 */
-func GetAttachment(id string) (attachment.Attachment, error) {
+func GetAttachment(mailId, attachmentId string) (attachment.Attachment, error) {
 	result := attachment.Attachment{}
 
 	rows, err := golangdb.Db["lib"].Query(`
@@ -65,7 +65,8 @@ func GetAttachment(id string) (attachment.Attachment, error) {
 		FROM attachment
 		WHERE
 			id=?
-	`, id)
+			AND mailItemId=?
+	`, attachmentId, mailId)
 
 	if err != nil {
 		return result, fmt.Errorf("Error running query to get attachment")
@@ -89,14 +90,7 @@ func GetAttachment(id string) (attachment.Attachment, error) {
 	return result, nil
 }
 
-/*
-Retrieves all stored mail items as an array of MailItem items.
-Takes an ID as a filter. If ID == "" then all records are returned.
-*/
-func GetMails(id string) ([]mailitem.MailItem, error) {
-	result := make([]mailitem.MailItem, 0)
-	attachments := make([]*attachment.Attachment, 0)
-
+func getMailQuery(whereClause string) string {
 	sql := `
 		SELECT
 			  mailitem.id AS mailItemId
@@ -108,35 +102,120 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 			, mailitem.body
 			, mailitem.contentType
 			, mailitem.boundary
-			, attachment.id AS attachmentId
-			, attachment.fileName
 
 		FROM mailitem
-			LEFT OUTER JOIN attachment ON mailitem.id=attachment.mailItemId
 
-		WHERE 1=1`
+		WHERE 1=1 `
 
-	if id != "" {
-		sql = sql + " AND mailitem.id=? "
-	}
+	sql = sql + whereClause
+	sql = sql + ` ORDER BY mailitem.dateSent DESC `
 
-	sql = sql + `ORDER BY mailitem.dateSent DESC`
+	return sql
+}
 
+/*
+Returns a single mail item by ID.
+*/
+func GetMail(id string) (mailitem.MailItem, error) {
+	result := mailitem.MailItem{}
+
+	sql := getMailQuery(" AND mailitem.id=? ")
 	rows, err := golangdb.Db["lib"].Query(sql, id)
 
 	if err != nil {
 		return result, fmt.Errorf("Error running query to get mail items: %s", err)
 	}
 
-	/*
-	 * Loop over the result, grouping by mail item ID, and add
-	 * to the resulting array. There will be multiple mail items
-	 * because of the join to attachments.
-	 */
-	currentMailItemId := ""
-	newItemCreated := false
-	newItem := mailitem.MailItem{}
+	rows.Next()
 
+	var mailItemId string
+	var dateSent string
+	var fromAddress string
+	var toAddressList string
+	var subject string
+	var xmailer string
+	var body string
+	var contentType string
+	var boundary string
+
+	rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary)
+
+	result = mailitem.MailItem{
+		Id:              mailItemId,
+		DateSent:        dateSent,
+		FromAddress:     fromAddress,
+		ToAddresses:     strings.Split(toAddressList, "; "),
+		Subject:         subject,
+		XMailer:         xmailer,
+		Body:            body,
+		ContentType:     contentType,
+		Boundary:        boundary,
+	}
+
+	/*
+	 * Get attachments
+	 */
+	sql = `
+		SELECT
+			  attachment.id AS attachmentId
+			, attachment.fileName
+			, attachment.contentType
+
+		FROM attachment
+		WHERE
+			attachment.mailItemId=?`
+
+	attachmentRows, err := golangdb.Db["lib"].Query(sql, mailItemId)
+	if err != nil {
+		return result, err
+	}
+
+	attachments := make([]*attachment.Attachment, 0)
+
+	for attachmentRows.Next() {
+		var attachmentId string
+		var fileName string
+		var contentType string
+
+		attachmentRows.Scan(&attachmentId, &fileName, &contentType)
+
+		newAttachment := &attachment.Attachment{
+			Id: attachmentId,
+			Headers: &attachment.AttachmentHeader{
+				FileName: fileName,
+				ContentType: contentType,
+			},
+		}
+
+		attachments = append(attachments, newAttachment)
+	}
+
+	attachmentRows.Close()
+
+	result.Attachments = attachments
+
+	rows.Close()
+	return result, nil
+}
+
+/*
+Retrieves all stored mail items as an array of MailItem items. Only
+returns rows starting at offset and gets up to length records. NOTE:
+This code stinks. It gets ALL rows, then returns a slice. Ick!
+*/
+func GetMailCollection(offset, length int) ([]mailitem.MailItem, error) {
+	result := make([]mailitem.MailItem, 0)
+
+	sql := getMailQuery("")
+	rows, err := golangdb.Db["lib"].Query(sql)
+
+	if err != nil {
+		return result, fmt.Errorf("Error running query to get mail items: %s", err)
+	}
+
+	/*
+	 * Loop over our records and grab attachments on the way.
+	 */
 	for rows.Next() {
 		var mailItemId string
 		var dateSent string
@@ -147,81 +226,74 @@ func GetMails(id string) ([]mailitem.MailItem, error) {
 		var body string
 		var contentType string
 		var boundary string
-		var attachmentId string
-		var fileName string
 
-		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary, &attachmentId, &fileName)
+		rows.Scan(&mailItemId, &dateSent, &fromAddress, &toAddressList, &subject, &xmailer, &body, &contentType, &boundary)
 
-		/*
-		 * If this is our first iteration then we haven't looked at a
-		 * current item yet
-		 */
-		if currentMailItemId == "" {
-			currentMailItemId = mailItemId
+		newItem := mailitem.MailItem{
+			Id:              mailItemId,
+			DateSent:        dateSent,
+			FromAddress:     fromAddress,
+			ToAddresses:     strings.Split(toAddressList, "; "),
+			Subject:         subject,
+			XMailer:         xmailer,
+			Body:            body,
+			ContentType:     contentType,
+			Boundary:        boundary,
 		}
 
 		/*
-		 * There will be multiple records per mail item if there are
-		 * multiple attachments. As such make sure we are getting all
-		 * the IDs first, and the mail item only once.
+		 * Get attachments
 		 */
-		newItem = mailitem.MailItem{}
+		sql = `
+			SELECT
+				  attachment.id AS attachmentId
+				, attachment.fileName
+			FROM attachment
+			WHERE
+				attachment.mailItemId=?`
 
-		if currentMailItemId != "" && currentMailItemId == mailItemId {
-			if attachmentId != "" {
-				attachments = append(attachments, &attachment.Attachment{Id: attachmentId, Headers: &attachment.AttachmentHeader{FileName: fileName}})
-			}
-
-			if !newItemCreated {
-				newItemCreated = true
-
-				newItem = mailitem.MailItem{
-					Id:              mailItemId,
-					DateSent:        dateSent,
-					FromAddress:     fromAddress,
-					ToAddresses:     strings.Split(toAddressList, "; "),
-					Subject:         subject,
-					XMailer:         xmailer,
-					Body:            body,
-					ContentType:     contentType,
-					Boundary:        boundary,
-					Attachments:     nil,
-				}
-			}
-		} else {
-			newItem.Attachments = attachments
-			log.Printf("Retrieving mail item %d from %s with a subject of %s", mailItemId, fromAddress, subject)
-
-			result = append(result, newItem)
-			attachments = make([]*attachment.Attachment, 0)
-
-			if attachmentId != "" {
-				attachments = append(attachments, &attachment.Attachment{Id: attachmentId, Headers: &attachment.AttachmentHeader{FileName: fileName}})
-			}
-
-			newItemCreated = true
-
-			newItem = mailitem.MailItem{
-				Id:              mailItemId,
-				DateSent:        dateSent,
-				FromAddress:     fromAddress,
-				ToAddresses:     strings.Split(toAddressList, "; "),
-				Subject:         subject,
-				XMailer:         xmailer,
-				Attachments:     nil,
-			}
-
-			if currentMailItemId != mailItemId {
-				currentMailItemId = mailItemId
-			}
+		attachmentRows, err := golangdb.Db["lib"].Query(sql, mailItemId)
+		if err != nil {
+			return result, err
 		}
+
+		attachments := make([]*attachment.Attachment, 0)
+
+		for attachmentRows.Next() {
+			var attachmentId string
+			var fileName string
+
+			attachmentRows.Scan(&attachmentId, &fileName)
+
+			newAttachment := &attachment.Attachment{
+				Id: attachmentId,
+				Headers: &attachment.AttachmentHeader{FileName: fileName},
+			}
+
+			attachments = append(attachments, newAttachment)
+		}
+
+		attachmentRows.Close()
+
+		newItem.Attachments = attachments
+		result = append(result, newItem)
 	}
 
-	newItem.Attachments = attachments
-	result = append(result, newItem)
-
 	rows.Close()
-	return result, nil
+
+	start := offset
+	end := offset + length
+
+	if start > len(result) {
+		start = 0
+		end = start + length
+	}
+
+	if end > len(result) {
+		end = len(result)
+	}
+
+	return result[start:end], nil
 }
 
 func storeAttachments(mailItemId string, transaction *sql.Tx, attachments []*attachment.Attachment) error {
