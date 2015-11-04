@@ -1,3 +1,5 @@
+# This project is out of date. Please visit [http://mailslurper.com](MailSlurper.com) to get to the latest version of MailSlurper.
+
 MailSlurper-Go
 ==============
 
